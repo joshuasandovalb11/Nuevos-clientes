@@ -25,7 +25,7 @@ export default function RootLayout() {
         <Stack.Screen 
           name="index" 
           options={{ 
-            title: '📍 Registro de Ubicación',
+            title: 'Registro de Cliente',
             headerTitleAlign: 'center',
             headerStyle: {
               backgroundColor: '#FFFFFF',
@@ -39,9 +39,9 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
   },
 });
