@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "RegistroUbicacionClientes",
-    "slug": "RegistroUbicacionClientes",
+    "name": "Clientes Nuevos",
+    "slug": "clientes-nuevos",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "registroubicacionclientes",
+    "icon": "./assets/Tools.png",
+    "scheme": "clientesnuevos",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/Tools.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
@@ -41,6 +41,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6d4b29bb-2f6c-40ac-ad65-6b4f94a165e5"
+      }
+    },
+    "owner": "erick.sandoval10"
   }
 }

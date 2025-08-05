@@ -20,7 +20,6 @@ const getResponsiveHeight = (baseHeight: number) => {
 
 const isSmallDevice = width < 360 || height < 640;
 const isMediumDevice = width >= 360 && width < 400;
-const isLargeDevice = width >= 400;
 
 export default function HomeScreen() {
   const [clientNumber, setClientNumber] = useState('');
@@ -42,7 +41,26 @@ export default function HomeScreen() {
     isError: false,
   });
 
-  // Pide permisos de ubicación al cargar la app
+  const handleClientNumberChange = (text: string) => {
+    // Elimina cualquier caracter que no sea un número
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setClientNumber(numericValue);
+  };
+
+  const handleClientNameChange = (text: string) => {
+    // Elimina cualquier caracter que no sea una letra o un espacio
+    const validName = text.replace(/[^a-zA-Z\s]/g, '');
+    setClientName(validName);
+  };
+
+  const formatProperCase = (name: string) => {
+    return name
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -53,12 +71,10 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  // Abre el modal de confirmación de ubicación
   const handleGetLocation = () => {
     setIsLocationModalVisible(true);
   };
 
-  // Obtiene la ubicación tras la confirmación
   const handleConfirmAndGetLocation = async () => {
     setIsLocationModalVisible(false);
     setIsLoading(true);
@@ -74,6 +90,7 @@ export default function HomeScreen() {
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setStatusModalContent({
         title: 'Error de Ubicación',
@@ -81,14 +98,11 @@ export default function HomeScreen() {
         isError: true,
       });
       setIsStatusModalVisible(true);
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-
-  // Muestra el modal de confirmación de datos
   const handleInitiateSend = () => {
     if (!clientNumber || !clientName || !location) {
         setStatusModalContent({
@@ -102,22 +116,23 @@ export default function HomeScreen() {
     setIsConfirmSendModalVisible(true);
   };
   
-  // Ejecuta el envío después de que el usuario confirma en el modal
   const executeSendEmail = async () => {
     setIsConfirmSendModalVisible(false);
     setIsLoading(true);
     
     if (!location) return;
 
+    const formattedName = formatProperCase(clientName.trim());
+
     const payload = {
-        client_number: clientNumber,
-        client_name: clientName,
+        client_number: clientNumber.trim(),
+        client_name: formattedName,
         latitude: location.latitude,
         longitude: location.longitude,
     };
 
     try {
-        const response = await fetch('https://backend-email-murex.vercel.app/api/send-mail', {
+        const response = await fetch('https://backend-email-murex.vercel.app/api/send-email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -139,7 +154,6 @@ export default function HomeScreen() {
         setIsStatusModalVisible(true);
 
     } catch (error: any) {
-        console.error('FALLO EN LA COMUNICACIÓN CON EL BACKEND:', error);
         setStatusModalContent({
             title: '❌ Error de Envío',
             message: `No se pudo enviar el registro: ${error.message}`,
@@ -151,7 +165,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Cierra el modal de estado (éxito/error) y limpia el formulario si fue exitoso
   const handleCloseStatusModal = () => {
     setIsStatusModalVisible(false);
     if (!statusModalContent.isError) {
@@ -161,8 +174,9 @@ export default function HomeScreen() {
     }
   };
 
-
-  const isFormComplete = clientNumber && clientName && location;
+  const areClientDetailsFilled = clientNumber.trim() !== '' && clientName.trim() !== '';
+  const isFormComplete = areClientDetailsFilled && location;
+  
   const availableHeight = height - (Platform.OS === 'android' ? 100 : 140);
   
   const progressPercentage = Math.round(
@@ -177,7 +191,7 @@ export default function HomeScreen() {
       contentContainerStyle={location ? styles.scrollContentWithMap : styles.scrollContentNoMap}
       showsVerticalScrollIndicator={!!location}
     >
-      {/* Modal 1: Confirmar Ubicación */}
+      {/* Modales... */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -202,7 +216,6 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      {/* Modal 2: Confirmar Envío de Datos */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -217,7 +230,8 @@ export default function HomeScreen() {
             </Text>
             <View style={styles.dataConfirmContainer}>
                 <Text style={styles.dataConfirmText}>• N° Cliente: <Text style={styles.dataBold}>{clientNumber}</Text></Text>
-                <Text style={styles.dataConfirmText}>• Nombre: <Text style={styles.dataBold}>{clientName}</Text></Text>
+                <Text style={styles.dataConfirmText}>• Nombre: <Text style={styles.dataBold}>{formatProperCase(clientName)}</Text></Text>
+                <Text style={styles.dataConfirmText}>• Coordenadas: <Text style={styles.dataBold}>{location?.latitude.toFixed(4)}, {location?.longitude.toFixed(4)}</Text></Text>
             </View>
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsConfirmSendModalVisible(false)}>
@@ -231,7 +245,6 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      {/* Modal 3: Mostrar Éxito o Error */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -265,7 +278,7 @@ export default function HomeScreen() {
               style={[styles.input, clientNumber && styles.inputFilled]}
               placeholder="Ej: 001234"
               value={clientNumber}
-              onChangeText={setClientNumber}
+              onChangeText={handleClientNumberChange}
               keyboardType="numeric"
               placeholderTextColor="#9CA3AF"
             />
@@ -277,7 +290,7 @@ export default function HomeScreen() {
               style={[styles.input, clientName && styles.inputFilled]}
               placeholder="Nombre completo del cliente"
               value={clientName}
-              onChangeText={setClientName}
+              onChangeText={handleClientNameChange}
               keyboardType="default"
               placeholderTextColor="#9CA3AF"
             />
@@ -291,7 +304,11 @@ export default function HomeScreen() {
                 <Text style={styles.loadingText}>Procesando...</Text>
               </View>
             ) : (
-              <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation}>
+              <TouchableOpacity 
+                style={[styles.locationButton, !areClientDetailsFilled && styles.locationButtonDisabled]} 
+                onPress={handleGetLocation}
+                disabled={!areClientDetailsFilled}
+              >
                 <Text style={styles.locationButtonText}>
                   {location ? 'Ubicación Confirmada ✓' : 'Obtener Ubicación del Cliente'}
                 </Text>
@@ -354,6 +371,23 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  locationButton: {
+    backgroundColor: '#3B82F6',
+    borderRadius: getResponsiveSize(isSmallDevice ? 8 : 12),
+    paddingVertical: getResponsiveSize(isSmallDevice ? 12 : 16),
+    paddingHorizontal: getResponsiveSize(16),
+    alignItems: 'center',
+    shadowColor: '#3B82F6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  locationButtonDisabled: {
+    backgroundColor: '#D1D5DB',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   scrollContainer: {
     flex: 1,
     backgroundColor: '#F8FAFC',
@@ -431,18 +465,6 @@ const styles = StyleSheet.create({
   },
   locationSection: {
     marginTop: getResponsiveSize(4),
-  },
-  locationButton: {
-    backgroundColor: '#3B82F6',
-    borderRadius: getResponsiveSize(isSmallDevice ? 8 : 12),
-    paddingVertical: getResponsiveSize(isSmallDevice ? 12 : 16),
-    paddingHorizontal: getResponsiveSize(16),
-    alignItems: 'center',
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
   locationButtonText: {
     color: '#FFFFFF',
