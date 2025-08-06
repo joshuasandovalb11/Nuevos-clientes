@@ -16,10 +16,8 @@
         "foregroundImage": "./assets/Tools.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": [
-        "android.permission.ACCESS_FINE_LOCATION"
-      ],
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.erick.sandoval10.clientesnuevos"
     },
     "web": {
       "bundler": "metro",
@@ -31,10 +29,16 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/Tools.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permitir que $(PRODUCT_NAME) use tu ubicación para registrar la posición geográfica de los nuevos clientes."
         }
       ],
       "expo-mail-composer"

@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 const { width, height } = Dimensions.get('window');
@@ -41,18 +41,19 @@ export default function HomeScreen() {
     isError: false,
   });
 
+  // Funciones de validación
+
+  // Manejo de formato del numero de cliente
   const handleClientNumberChange = (text: string) => {
-    // Elimina cualquier caracter que no sea un número
     const numericValue = text.replace(/[^0-9]/g, '');
     setClientNumber(numericValue);
   };
 
+  // Manejo del formato del nombre del cliente
   const handleClientNameChange = (text: string) => {
-    // Elimina cualquier caracter que no sea una letra o un espacio
     const validName = text.replace(/[^a-zA-Z\s]/g, '');
     setClientName(validName);
   };
-
   const formatProperCase = (name: string) => {
     return name
       .toLowerCase()
@@ -61,6 +62,7 @@ export default function HomeScreen() {
       .join(' ');
   };
 
+  // Efectp para pedir el uso de ubicacion
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -71,10 +73,12 @@ export default function HomeScreen() {
     })();
   }, []);
 
+  // Manejo para obtener ubicacion
   const handleGetLocation = () => {
     setIsLocationModalVisible(true);
   };
 
+  // Confirmacion de permisos oara obtener ubicacion
   const handleConfirmAndGetLocation = async () => {
     setIsLocationModalVisible(false);
     setIsLoading(true);
@@ -103,6 +107,7 @@ export default function HomeScreen() {
     }
   };
 
+  // Funcion para inicializar el envio de informacion
   const handleInitiateSend = () => {
     if (!clientNumber || !clientName || !location) {
         setStatusModalContent({
@@ -116,6 +121,7 @@ export default function HomeScreen() {
     setIsConfirmSendModalVisible(true);
   };
   
+  // Funcion que se encarga de mandar la informacion del email
   const executeSendEmail = async () => {
     setIsConfirmSendModalVisible(false);
     setIsLoading(true);
@@ -165,6 +171,7 @@ export default function HomeScreen() {
     }
   };
 
+  // Funcion para cerrar el modal y limpiar la informacion en el form
   const handleCloseStatusModal = () => {
     setIsStatusModalVisible(false);
     if (!statusModalContent.isError) {
@@ -186,191 +193,201 @@ export default function HomeScreen() {
   );
 
   return (
-    <ScrollView 
-      style={styles.scrollContainer} 
-      contentContainerStyle={location ? styles.scrollContentWithMap : styles.scrollContentNoMap}
-      showsVerticalScrollIndicator={!!location}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardAvoidingContainer}
     >
-      {/* Modales... */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={isLocationModalVisible}
-        onRequestClose={() => setIsLocationModalVisible(false)}
+      <ScrollView 
+        style={styles.scrollContainer} 
+        contentContainerStyle={location ? styles.scrollContentWithMap : styles.scrollContentNoMap}
+        showsVerticalScrollIndicator={!!location}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>📍 Confirmar Ubicación</Text>
-            <Text style={styles.modalText}>
-              Por favor confirma que te encuentras físicamente en la tienda o local del cliente.
-            </Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsLocationModalVisible(false)}>
-                <Text style={[styles.modalButtonText, styles.modalButtonTextCancel]}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={handleConfirmAndGetLocation}>
-                <Text style={styles.modalButtonText}>Sí, Obtener Ubicación</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={isConfirmSendModalVisible}
-        onRequestClose={() => setIsConfirmSendModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>✉️ Confirmar Envío</Text>
-            <Text style={styles.modalText}>
-              Se enviará un correo con la siguiente información. ¿Deseas continuar?
-            </Text>
-            <View style={styles.dataConfirmContainer}>
-                <Text style={styles.dataConfirmText}>• N° Cliente: <Text style={styles.dataBold}>{clientNumber}</Text></Text>
-                <Text style={styles.dataConfirmText}>• Nombre: <Text style={styles.dataBold}>{formatProperCase(clientName)}</Text></Text>
-                <Text style={styles.dataConfirmText}>• Coordenadas: <Text style={styles.dataBold}>{location?.latitude.toFixed(4)}, {location?.longitude.toFixed(4)}</Text></Text>
-            </View>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsConfirmSendModalVisible(false)}>
-                <Text style={[styles.modalButtonText, styles.modalButtonTextCancel]}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={executeSendEmail}>
-                <Text style={styles.modalButtonText}>Confirmar y Enviar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={isStatusModalVisible}
-        onRequestClose={handleCloseStatusModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>{statusModalContent.title}</Text>
-            <Text style={styles.modalText}>{statusModalContent.message}</Text>
-            <TouchableOpacity 
-                style={[styles.modalButton, statusModalContent.isError ? styles.modalButtonError : styles.modalButtonConfirm, {flex: 0, width: '100%'}]} 
-                onPress={handleCloseStatusModal}
-            >
-              <Text style={styles.modalButtonText}>Aceptar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <View style={location ? styles.containerWithMap : [styles.containerCentered, { minHeight: availableHeight }]}>
-        
-        <View style={[styles.headerCard, { marginBottom: getResponsiveSize(isSmallDevice ? 8 : 12) }]}>
-          <Text style={styles.subtitle}>Completa la información del nuevo cliente</Text>
-        </View>
-
-        <View style={[styles.formCard, { marginBottom: getResponsiveSize(isSmallDevice ? 8 : 12) }]}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Número de Cliente</Text>
-            <TextInput
-              style={[styles.input, clientNumber && styles.inputFilled]}
-              placeholder="Ej: 001234"
-              value={clientNumber}
-              onChangeText={handleClientNumberChange}
-              keyboardType="numeric"
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Nombre del Cliente</Text>
-            <TextInput
-              style={[styles.input, clientName && styles.inputFilled]}
-              placeholder="Nombre completo del cliente"
-              value={clientName}
-              onChangeText={handleClientNameChange}
-              keyboardType="default"
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
-
-          <View style={styles.locationSection}>
-            <Text style={styles.inputLabel}>Ubicación del Cliente</Text>
-            {isLoading && !isStatusModalVisible ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size={isSmallDevice ? "small" : "large"} color="#3B82F6" />
-                <Text style={styles.loadingText}>Procesando...</Text>
+        {/* Modal 1 */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={isLocationModalVisible}
+          onRequestClose={() => setIsLocationModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>📍 Confirmar Ubicación</Text>
+              <Text style={styles.modalText}>
+                Confirma que te encuentras físicamente en la tienda o local del cliente.
+              </Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsLocationModalVisible(false)}>
+                  <Text style={[styles.modalButtonText, styles.modalButtonTextCancel]}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={handleConfirmAndGetLocation}>
+                  <Text style={styles.modalButtonText}>Sí, Obtener Ubicación</Text>
+                </TouchableOpacity>
               </View>
-            ) : (
-              <TouchableOpacity 
-                style={[styles.locationButton, !areClientDetailsFilled && styles.locationButtonDisabled]} 
-                onPress={handleGetLocation}
-                disabled={!areClientDetailsFilled}
-              >
-                <Text style={styles.locationButtonText}>
-                  {location ? 'Ubicación Confirmada ✓' : 'Obtener Ubicación del Cliente'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {!location && (
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
             </View>
-            <Text style={styles.progressText}>Progreso: {progressPercentage}%</Text>
           </View>
-        )}
+        </Modal>
 
-      </View>
+        {/* Modal 2 */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={isConfirmSendModalVisible}
+          onRequestClose={() => setIsConfirmSendModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>✉️ Confirmar Envío</Text>
+              <Text style={styles.modalText}>
+                Se enviará un correo con la siguiente información. ¿Deseas continuar?
+              </Text>
+              <View style={styles.dataConfirmContainer}>
+                  <Text style={styles.dataConfirmText}>• N° Cliente: <Text style={styles.dataBold}>{clientNumber}</Text></Text>
+                  <Text style={styles.dataConfirmText}>• Nombre: <Text style={styles.dataBold}>{formatProperCase(clientName)}</Text></Text>
+                </View>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsConfirmSendModalVisible(false)}>
+                  <Text style={[styles.modalButtonText, styles.modalButtonTextCancel]}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={executeSendEmail}>
+                  <Text style={styles.modalButtonText}>Confirmar y Enviar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
-      {location && (
-        <View style={styles.mapAndSubmitContainer}>
-          <View style={styles.mapCard}>
-            <Text style={styles.mapTitle}>🗺️ Ubicación en el Mapa</Text>
-            <Text style={styles.mapSubtitle}>Esta es la ubicación exacta que fue registrada.</Text>
-            <MapView
-              style={styles.map}
-              region={mapRegion}
-              onRegionChangeComplete={setMapRegion}
-            >
-              <Marker
-                coordinate={location}
-                title="Ubicación del Cliente"
-                description="Ubicación confirmada"
+        {/* Modal 3 */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={isStatusModalVisible}
+          onRequestClose={handleCloseStatusModal}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>{statusModalContent.title}</Text>
+              <Text style={styles.modalText}>{statusModalContent.message}</Text>
+              <TouchableOpacity 
+                  style={[styles.modalButton, statusModalContent.isError ? styles.modalButtonError : styles.modalButtonConfirm, {flex: 0, width: '100%'}]} 
+                  onPress={handleCloseStatusModal}
+              >
+                <Text style={styles.modalButtonText}>Aceptar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <View style={location ? styles.containerWithMap : [styles.containerCentered, { minHeight: availableHeight }]}>
+          
+          <View style={[styles.headerCard, { marginBottom: getResponsiveSize(isSmallDevice ? 8 : 12) }]}>
+            <Text style={styles.subtitle}>Completa la información del nuevo cliente</Text>
+          </View>
+
+          <View style={[styles.formCard, { marginBottom: getResponsiveSize(isSmallDevice ? 8 : 12) }]}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Número de Cliente</Text>
+              <TextInput
+                style={[styles.input, clientNumber && styles.inputFilled]}
+                placeholder="Ej: 001234"
+                value={clientNumber}
+                onChangeText={handleClientNumberChange}
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
               />
-            </MapView>
-            
-            <View style={[styles.progressContainer, { marginTop: getResponsiveSize(16) }]}>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Nombre del Cliente</Text>
+              <TextInput
+                style={[styles.input, clientName && styles.inputFilled]}
+                placeholder="Nombre completo del cliente"
+                value={clientName}
+                onChangeText={handleClientNameChange}
+                keyboardType="default"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+
+            <View style={styles.locationSection}>
+              <Text style={styles.inputLabel}>Ubicación del Cliente</Text>
+              {isLoading && !isStatusModalVisible ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size={isSmallDevice ? "small" : "large"} color="#3B82F6" />
+                  <Text style={styles.loadingText}>Procesando...</Text>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  style={[styles.locationButton, !areClientDetailsFilled && styles.locationButtonDisabled]} 
+                  onPress={handleGetLocation}
+                  disabled={!areClientDetailsFilled}
+                >
+                  <Text style={styles.locationButtonText}>
+                    {location ? 'Ubicación Confirmada ✓' : 'Obtener Ubicación del Cliente'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {!location && (
+            <View style={styles.progressContainer}>
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
               </View>
-              <Text style={styles.progressText}>
-                {progressPercentage === 100 ? 'Formulario Completo ✓' : `Progreso: ${progressPercentage}%`}
-              </Text>
+              <Text style={styles.progressText}>Progreso: {progressPercentage}%</Text>
             </View>
-          </View>
+          )}
 
-          <TouchableOpacity
-            style={[styles.submitButton, isFormComplete && styles.submitButtonActive]}
-            onPress={handleInitiateSend}
-            disabled={!isFormComplete || isLoading}
-          >
-            <Text style={[styles.submitButtonText, isFormComplete && styles.submitButtonTextActive]}>
-              {isLoading ? 'Enviando...' : (isFormComplete ? 'Enviar Registro' : '⚠️ Completa todos los campos')}
-            </Text>
-          </TouchableOpacity>
         </View>
-      )}
-    </ScrollView>
+
+        {location && (
+          <View style={styles.mapAndSubmitContainer}>
+            <View style={styles.mapCard}>
+              <Text style={styles.mapTitle}>🗺️ Ubicación en el Mapa</Text>
+              <Text style={styles.mapSubtitle}>Esta es la ubicación exacta que fue registrada.</Text>
+              <MapView
+                style={styles.map}
+                region={mapRegion}
+                onRegionChangeComplete={setMapRegion}
+              >
+                <Marker
+                  coordinate={location}
+                  title="Ubicación del Cliente"
+                  description="Ubicación confirmada"
+                />
+              </MapView>
+              
+              <View style={[styles.progressContainer, { marginTop: getResponsiveSize(16) }]}>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
+                </View>
+                <Text style={styles.progressText}>
+                  {progressPercentage === 100 ? 'Formulario Completo ✓' : `Progreso: ${progressPercentage}%`}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.submitButton, isFormComplete && styles.submitButtonActive]}
+              onPress={handleInitiateSend}
+              disabled={!isFormComplete || isLoading}
+            >
+              <Text style={[styles.submitButtonText, isFormComplete && styles.submitButtonTextActive]}>
+                {isLoading ? 'Enviando...' : (isFormComplete ? 'Enviar Registro' : '⚠️ Completa todos los campos')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardAvoidingContainer: {
+    flex: 1,
+  },
   locationButton: {
     backgroundColor: '#3B82F6',
     borderRadius: getResponsiveSize(isSmallDevice ? 8 : 12),
