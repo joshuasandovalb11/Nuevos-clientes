@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -22,6 +23,11 @@ const isSmallDevice = width < 360 || height < 640;
 const isMediumDevice = width >= 360 && width < 400;
 
 export default function HomeScreen() {
+  // Estos de autenticacion
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userPhoneNumber, setUserPhoneNumber] = useState('');
+  const [authIsLoading, setAuthIsLoading] = useState(false);
+  // Estados del formulario
   const [clientNumber, setClientNumber] = useState('');
   const [clientName, setClientName] = useState('');
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -42,6 +48,56 @@ export default function HomeScreen() {
   });
 
   // Funciones de validación
+
+  // Funcion de verificacion de usuario
+  const handleVerifyUser = async () => {
+    if (!userPhoneNumber || userPhoneNumber.length !== 10) {
+      Alert.alert('Número Inválido', 'Por favor, ingresa tu número de teléfono a 10 dígitos.');
+      return;
+    }
+
+    setAuthIsLoading(true);
+    try {
+      const response = await fetch('https://backend-email-murex.vercel.app/api/verify-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_phone_number: userPhoneNumber }),
+      });
+
+      if (response.ok) {
+        setIsAuthenticated(true);
+      } else {
+        const result = await response.json();
+        Alert.alert('Acceso Denegado', result.error || 'Este número no tiene permiso para usar la aplicación.');
+      }
+    } catch (error) {
+      Alert.alert('Error de Conexión', 'No se pudo verificar el usuario. Revisa tu conexión a internet e inténtalo de nuevo.');
+    } finally {
+      setAuthIsLoading(false);
+    }
+  };
+
+  // FUNCIÓN PARA FORMATEAR EL NÚMERO DE TELÉFONO
+  const formatPhoneNumber = (text: string) => {
+    if (!text) return '';
+
+    const numericValue = text.replace(/[^0-9]/g, '');
+    const textLength = numericValue.length;
+
+    if (textLength <= 3) {
+      return numericValue;
+    }
+    if (textLength <= 6) {
+      return `${numericValue.slice(0, 3)}-${numericValue.slice(3)}`;
+    }
+    return `${numericValue.slice(0, 3)}-${numericValue.slice(3, 6)}-${numericValue.slice(6, 10)}`;
+  };
+
+  // MANEJADOR PARA EL TELÉFONO DEL VENDEDOR (Pantalla de Autenticación)
+  const handleUserPhoneNumberChange = (text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setUserPhoneNumber(numericValue);
+  };
 
   // Manejo de formato del numero de cliente
   const handleClientNumberChange = (text: string) => {
@@ -94,7 +150,7 @@ export default function HomeScreen() {
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     } catch (error) {
       setStatusModalContent({
         title: 'Error de Ubicación',
@@ -191,6 +247,35 @@ export default function HomeScreen() {
     (clientName ? 33 : 0) + 
     (location ? 34 : 0)
   );
+
+  if (!isAuthenticated) {
+    return (
+      <KeyboardAvoidingView behavior="padding" style={styles.authContainer}>
+        <View style={styles.authCard}>
+          <Text style={styles.authTitle}>Verificación de Vendedor</Text>
+          <Text style={styles.authSubtitle}>Ingresa tu número de teléfono para poder registrar clientes.</Text>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Tu número de teléfono (10 dígitos)"
+            value={formatPhoneNumber(userPhoneNumber)}
+            onChangeText={handleUserPhoneNumberChange}
+            keyboardType="phone-pad"
+            maxLength={12}
+            placeholderTextColor="#9CA3AF"
+          />
+
+          {authIsLoading ? (
+            <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
+          ) : (
+            <TouchableOpacity style={styles.authButton} onPress={handleVerifyUser}>
+              <Text style={styles.authButtonText}>Verificar y Continuar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -538,7 +623,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignSelf: 'center',
-    marginBottom: 30,
+    marginBottom: 50,
   },
   submitButtonActive: {
     backgroundColor: '#10B981',
@@ -547,13 +632,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
-    marginBottom: 30,
+    marginBottom: 50,
   },
   submitButtonText: {
     fontSize: getResponsiveSize(isSmallDevice ? 13 : isMediumDevice ? 14 : 16),
     fontWeight: '600',
     color: '#9CA3AF',
-
   },
   submitButtonTextActive: {
     color: '#FFFFFF',
@@ -668,5 +752,52 @@ const styles = StyleSheet.create({
   },
   modalButtonTextCancel: {
     color: '#4B5563',
+  },
+  // Estilos para el auth
+  authContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#F8FAFC',
+  },
+  authCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    alignItems: 'center',
+  },
+  authTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  authSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  authButton: {
+    marginTop: 20,
+    backgroundColor: '#3B82F6',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
+  },
+  authButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -17,7 +17,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.erick.sandoval10.clientesnuevos"
+      "package": "com.erick.sandoval10.clientesnuevos",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -38,7 +42,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Permitir que $(PRODUCT_NAME) use tu ubicación para registrar la posición geográfica de los nuevos clientes."
+          "locationAlwaysAndWhenInUsePermission": "Permitir que $(PRODUCT_NAME) use tu ubicación para registrar la posición geográfica de los nuevos clientes.",
+           "isAndroidBackgroundLocationEnabled": false
         }
       ],
       "expo-mail-composer"
