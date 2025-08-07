@@ -194,7 +194,7 @@ export default function HomeScreen() {
     };
 
     try {
-        const response = await fetch('https://backend-email-murex.vercel.app/api/send-email', {
+        const response = await fetch('https://backend-email-murex.vercel.app/api/send-mail', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
