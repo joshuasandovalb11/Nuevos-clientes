@@ -1,4 +1,6 @@
-{
+import 'dotenv/config';
+
+export default {
   "expo": {
     "name": "Clientes Nuevos",
     "slug": "clientes-nuevos",
@@ -24,7 +26,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyBcR-ftvLs-vF5eFCyP1vDo1odGf4hVXlQ"
+          "apiKey": process.env.Maps_API_KEY
         }
       }
     },
@@ -38,7 +40,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/Tools.png",
+          "image": "./assets.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -69,4 +71,4 @@
     },
     "owner": "erick.sandoval10"
   }
-}
+};
