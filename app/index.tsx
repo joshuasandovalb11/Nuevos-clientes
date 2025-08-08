@@ -2,12 +2,25 @@
 import * as Location from 'expo-location';
 import { useNavigation } from 'expo-router';
 import { useEffect, useLayoutEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 const { width, height } = Dimensions.get('window');
 
-// Funciones de responsividad
+// --- Funciones de Responsividad ---
 const getResponsiveSize = (baseSize: number) => {
   const scale = width / 375;
   const newSize = baseSize * scale;
@@ -21,22 +34,25 @@ const getResponsiveHeight = (baseHeight: number) => {
 const isSmallDevice = width < 360 || height < 640;
 const isMediumDevice = width >= 360 && width < 400;
 
+// --- Componente Principal ---
 export default function HomeScreen() {
-  // Estados de autenticacion
+  // --- Estados ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userPhoneNumber, setUserPhoneNumber] = useState('');
   const [authIsLoading, setAuthIsLoading] = useState(false);
-  // Estados del formulario
+
   const [clientNumber, setClientNumber] = useState('');
   const [clientName, setClientName] = useState('');
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
   const [mapRegion, setMapRegion] = useState({
     latitude: 32.5333,
     longitude: -117.0167,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
+
   const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
   const [isConfirmSendModalVisible, setIsConfirmSendModalVisible] = useState(false);
   const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
@@ -48,15 +64,13 @@ export default function HomeScreen() {
 
   const navigation = useNavigation();
 
+  // --- Lógica de Autenticación y Navegación ---
   const handleLogout = () => {
     Alert.alert(
       "Confirmar Salida",
       "¿Estás seguro de que quieres salir? Se limpiarán todos los datos del formulario.",
       [
-        {
-          text: "Cancelar",
-          style: "cancel"
-        },
+        { text: "Cancelar", style: "cancel" },
         {
           text: "Salir",
           onPress: () => {
@@ -66,8 +80,8 @@ export default function HomeScreen() {
             setClientNumber('');
             setLocation(null);
           },
-          style: "destructive"
-        }
+          style: "destructive",
+        },
       ]
     );
   };
@@ -76,11 +90,8 @@ export default function HomeScreen() {
     navigation.setOptions({
       headerRight: () => (
         isAuthenticated ? (
-          <TouchableOpacity onPress={handleLogout} style={{ marginTop: 5}}>
-            <Text style={{ 
-              color: '#EF4444', fontSize: 16, fontWeight: '700', padding: 4,}}>
-                Salir
-            </Text>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutButtonText}>Salir</Text>
           </TouchableOpacity>
         ) : null
       ),
@@ -103,64 +114,56 @@ export default function HomeScreen() {
         setIsAuthenticated(true);
       } else {
         const result = await response.json();
-        Alert.alert('Acceso Denegado', result.error || 'Este número no tiene permiso para usar la aplicación.');
+        Alert.alert('Acceso Denegado', result.error || 'Este número no tiene permiso.');
       }
     } catch (error) {
-      Alert.alert('Error de Conexión', 'No se pudo verificar el usuario. Revisa tu conexión a internet e inténtalo de nuevo.');
+      Alert.alert('Error de Conexión', 'No se pudo verificar el usuario. Revisa tu conexión.');
     } finally {
       setAuthIsLoading(false);
     }
   };
 
+  // --- Lógica del Formulario ---
   const formatPhoneNumber = (text: string) => {
-    if (!text) return '';
     const numericValue = text.replace(/[^0-9]/g, '');
-    const textLength = numericValue.length;
-    if (textLength <= 3) return numericValue;
-    if (textLength <= 6) return `${numericValue.slice(0, 3)}-${numericValue.slice(3)}`;
+    if (numericValue.length <= 3) return numericValue;
+    if (numericValue.length <= 6) return `${numericValue.slice(0, 3)}-${numericValue.slice(3)}`;
     return `${numericValue.slice(0, 3)}-${numericValue.slice(3, 6)}-${numericValue.slice(6, 10)}`;
   };
 
   const handleUserPhoneNumberChange = (text: string) => {
-    const numericValue = text.replace(/[^0-9]/g, '');
-    setUserPhoneNumber(numericValue);
+    setUserPhoneNumber(text.replace(/[^0-9]/g, ''));
   };
 
   const handleClientNumberChange = (text: string) => {
-    const numericValue = text.replace(/[^0-9]/g, '');
-    setClientNumber(numericValue);
+    setClientNumber(text.replace(/[^0-9]/g, ''));
   };
 
   const handleClientNameChange = (text: string) => {
-    const validName = text.replace(/[^a-zA-Z\s]/g, '');
-    setClientName(validName);
+    setClientName(text.replace(/[^a-zA-Z\s]/g, ''));
   };
+
   const formatProperCase = (name: string) => {
     return name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permiso denegado', 'Se necesita permiso de ubicación para usar esta función.');
       }
     })();
   }, []);
 
-  const handleGetLocation = () => {
-    setIsLocationModalVisible(true);
-  };
+  const handleGetLocation = () => setIsLocationModalVisible(true);
 
   const handleConfirmAndGetLocation = async () => {
     setIsLocationModalVisible(false);
     setIsLoading(true);
     try {
-      const currentPosition = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      const coords = {
-        latitude: currentPosition.coords.latitude,
-        longitude: currentPosition.coords.longitude,
-      };
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const coords = { latitude: position.coords.latitude, longitude: position.coords.longitude };
       setLocation(coords);
       setMapRegion({ ...coords, latitudeDelta: 0.01, longitudeDelta: 0.01 });
     } catch (error) {
@@ -172,10 +175,10 @@ export default function HomeScreen() {
   };
 
   const handleInitiateSend = () => {
-    if (!clientNumber || !clientName || !location) {
-        setStatusModalContent({ title: 'Datos incompletos', message: 'Por favor, completa todos los campos y obtén la ubicación.', isError: true });
-        setIsStatusModalVisible(true);
-        return;
+    if (!isFormComplete) {
+      setStatusModalContent({ title: 'Datos incompletos', message: 'Por favor, completa todos los campos y obtén la ubicación.', isError: true });
+      setIsStatusModalVisible(true);
+      return;
     }
     setIsConfirmSendModalVisible(true);
   };
@@ -184,10 +187,10 @@ export default function HomeScreen() {
     setIsConfirmSendModalVisible(false);
     setIsLoading(true);
     if (!location) return;
-    const formattedName = formatProperCase(clientName.trim());
+
     const payload = {
         client_number: clientNumber.trim(),
-        client_name: formattedName,
+        client_name: formatProperCase(clientName.trim()),
         latitude: location.latitude,
         longitude: location.longitude,
     };
@@ -198,9 +201,7 @@ export default function HomeScreen() {
           body: JSON.stringify(payload),
         });
         const result = await response.json();
-        if (!response.ok) {
-            throw new Error(result.error || 'Ocurrió un error desconocido en el servidor.');
-        }
+        if (!response.ok) throw new Error(result.error || 'Ocurrió un error en el servidor.');
         setStatusModalContent({ title: '✅ ¡Éxito!', message: 'El registro se ha enviado correctamente.', isError: false });
         setIsStatusModalVisible(true);
     } catch (error: any) {
@@ -214,30 +215,23 @@ export default function HomeScreen() {
   const handleCloseStatusModal = () => {
     setIsStatusModalVisible(false);
     if (!statusModalContent.isError) {
-        setClientName('');
-        setClientNumber('');
-        setLocation(null);
+      setClientName('');
+      setClientNumber('');
+      setLocation(null);
     }
   };
 
+  // --- Variables Calculadas para Renderizado ---
   const areClientDetailsFilled = clientNumber.trim() !== '' && clientName.trim() !== '';
-  const isFormComplete = areClientDetailsFilled && location;
-  
-  const availableHeight = height - (Platform.OS === 'android' ? 100 : 140);
-  
-  const progressPercentage = Math.round(
-    (clientNumber ? 33 : 0) + 
-    (clientName ? 33 : 0) + 
-    (location ? 34 : 0)
-  );
+  const isFormComplete = areClientDetailsFilled && location !== null;
 
+  // --- Renderizado Condicional: Pantalla de Autenticación ---
   if (!isAuthenticated) {
     return (
       <KeyboardAvoidingView behavior="padding" style={styles.authContainer}>
         <View style={styles.authCard}>
           <Text style={styles.authTitle}>Verificación de Vendedor</Text>
-          <Text style={styles.authSubtitle}>Ingresa tu número de teléfono para poder registrar clientes.</Text>
-          
+          <Text style={styles.authSubtitle}>Ingresa tu número de teléfono para registrar clientes.</Text>
           <TextInput
             style={styles.input}
             placeholder="Tu número de teléfono (10 dígitos)"
@@ -247,7 +241,6 @@ export default function HomeScreen() {
             maxLength={12}
             placeholderTextColor="#9CA3AF"
           />
-
           {authIsLoading ? (
             <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
           ) : (
@@ -260,24 +253,20 @@ export default function HomeScreen() {
     );
   }
 
+  // --- Renderizado Principal: Pantalla del Formulario ---
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.keyboardAvoidingContainer}
     >
-      <ScrollView 
-        style={styles.scrollContainer} 
-        contentContainerStyle={location ? styles.scrollContentWithMap : styles.scrollContentNoMap}
-        showsVerticalScrollIndicator={!!location}
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Modal 1 */}
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={isLocationModalVisible}
-          onRequestClose={() => setIsLocationModalVisible(false)}
-        >
+        {/* --- Modales --- */}
+        <Modal animationType="fade" transparent={true} visible={isLocationModalVisible} onRequestClose={() => setIsLocationModalVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>📍 Confirmar Ubicación</Text>
@@ -289,20 +278,14 @@ export default function HomeScreen() {
                   <Text style={[styles.modalButtonText, styles.modalButtonTextCancel]}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={handleConfirmAndGetLocation}>
-                  <Text style={styles.modalButtonText}>Sí, Obtener Ubicación</Text>
+                  <Text style={styles.modalButtonText}>Sí, Obtener</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
 
-        {/* Modal 2 */}
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={isConfirmSendModalVisible}
-          onRequestClose={() => setIsConfirmSendModalVisible(false)}
-        >
+        <Modal animationType="fade" transparent={true} visible={isConfirmSendModalVisible} onRequestClose={() => setIsConfirmSendModalVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>✉️ Confirmar Envío</Text>
@@ -310,35 +293,29 @@ export default function HomeScreen() {
                 Se enviará un correo con la siguiente información. ¿Deseas continuar?
               </Text>
               <View style={styles.dataConfirmContainer}>
-                  <Text style={styles.dataConfirmText}>• N° Cliente: <Text style={styles.dataBold}>{clientNumber}</Text></Text>
-                  <Text style={styles.dataConfirmText}>• Nombre: <Text style={styles.dataBold}>{formatProperCase(clientName)}</Text></Text>
-                </View>
+                <Text style={styles.dataConfirmText}>• N° Cliente: <Text style={styles.dataBold}>{clientNumber}</Text></Text>
+                <Text style={styles.dataConfirmText}>• Nombre: <Text style={styles.dataBold}>{formatProperCase(clientName)}</Text></Text>
+              </View>
               <View style={styles.modalButtonContainer}>
                 <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsConfirmSendModalVisible(false)}>
                   <Text style={[styles.modalButtonText, styles.modalButtonTextCancel]}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={executeSendEmail}>
-                  <Text style={styles.modalButtonText}>Confirmar y Enviar</Text>
+                  <Text style={styles.modalButtonText}>Confirmar</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
 
-        {/* Modal 3 */}
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={isStatusModalVisible}
-          onRequestClose={handleCloseStatusModal}
-        >
+        <Modal animationType="fade" transparent={true} visible={isStatusModalVisible} onRequestClose={handleCloseStatusModal}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>{statusModalContent.title}</Text>
               <Text style={styles.modalText}>{statusModalContent.message}</Text>
-              <TouchableOpacity 
-                  style={[styles.modalButton, statusModalContent.isError ? styles.modalButtonError : styles.modalButtonConfirm, {flex: 0, width: '100%'}]} 
-                  onPress={handleCloseStatusModal}
+              <TouchableOpacity
+                style={[styles.modalButton, statusModalContent.isError ? styles.modalButtonError : styles.modalButtonConfirm, { flex: 0, width: '100%' }]}
+                onPress={handleCloseStatusModal}
               >
                 <Text style={styles.modalButtonText}>Aceptar</Text>
               </TouchableOpacity>
@@ -346,96 +323,43 @@ export default function HomeScreen() {
           </View>
         </Modal>
 
-        <View style={location ? styles.containerWithMap : [styles.containerCentered, { minHeight: availableHeight }]}>
-          
-          <View style={[styles.headerCard, { marginBottom: getResponsiveSize(isSmallDevice ? 8 : 12) }]}>
+        {/* --- Contenido Principal de la Pantalla --- */}
+        <View style={styles.mainContainer}>
+          <View style={[styles.headerCard, { marginBottom: getResponsiveSize(12) }]}>
             <Text style={styles.subtitle}>Completa la información del nuevo cliente</Text>
           </View>
 
-          <View style={[styles.formCard, { marginBottom: getResponsiveSize(isSmallDevice ? 8 : 12) }]}>
+          <View style={[styles.formCard, { marginBottom: getResponsiveSize(12) }]}>
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Número de Cliente</Text>
-              <TextInput
-                style={[styles.input, clientNumber && styles.inputFilled]}
-                placeholder="Ej: 001234"
-                value={clientNumber}
-                onChangeText={handleClientNumberChange}
-                keyboardType="numeric"
-                placeholderTextColor="#9CA3AF"
-              />
+              <TextInput style={[styles.input, clientNumber && styles.inputFilled]} placeholder="Ej: 001234" value={clientNumber} onChangeText={handleClientNumberChange} keyboardType="numeric" placeholderTextColor="#9CA3AF" />
             </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Nombre del Cliente</Text>
-              <TextInput
-                style={[styles.input, clientName && styles.inputFilled]}
-                placeholder="Nombre completo del cliente"
-                value={clientName}
-                onChangeText={handleClientNameChange}
-                keyboardType="default"
-                placeholderTextColor="#9CA3AF"
-              />
+              <TextInput style={[styles.input, clientName && styles.inputFilled]} placeholder="Nombre completo del cliente" value={clientName} onChangeText={handleClientNameChange} keyboardType="default" placeholderTextColor="#9CA3AF" />
             </View>
 
             <View style={styles.locationSection}>
               <Text style={styles.inputLabel}>Ubicación del Cliente</Text>
               {isLoading && !isStatusModalVisible ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size={isSmallDevice ? "small" : "large"} color="#3B82F6" />
-                  <Text style={styles.loadingText}>Procesando...</Text>
+                  <ActivityIndicator size="large" color="#3B82F6" />
+                  <Text style={styles.loadingText}>Obteniendo coordenadas...</Text>
                 </View>
               ) : (
-                <TouchableOpacity 
-                  style={[styles.locationButton, !areClientDetailsFilled && styles.locationButtonDisabled]} 
+                <TouchableOpacity
+                  style={[styles.locationButton, !areClientDetailsFilled && styles.locationButtonDisabled]}
                   onPress={handleGetLocation}
                   disabled={!areClientDetailsFilled}
                 >
-                  <Text style={styles.locationButtonText}>
-                    {location ? 'Ubicación Confirmada ✓' : 'Obtener Ubicación del Cliente'}
-                  </Text>
+                  <Text style={styles.locationButtonText}>{location ? 'Ubicación Confirmada ✓' : 'Obtener Ubicación'}</Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
-          {!location && (
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
-              </View>
-              <Text style={styles.progressText}>Progreso: {progressPercentage}%</Text>
-            </View>
-          )}
-
-        </View>
-
-        {location && (
-          <View style={styles.mapAndSubmitContainer}>
-            <View style={styles.mapCard}>
-              <Text style={styles.mapTitle}>🗺️ Ubicación en el Mapa</Text>
-              <Text style={styles.mapSubtitle}>Esta es la ubicación exacta que fue registrada.</Text>
-              <MapView
-                style={styles.map}
-                region={mapRegion}
-                onRegionChangeComplete={setMapRegion}
-              >
-                <Marker
-                  coordinate={location}
-                  title="Ubicación del Cliente"
-                  description="Ubicación confirmada"
-                />
-              </MapView>
-              
-              <View style={[styles.progressContainer, { marginTop: getResponsiveSize(16) }]}>
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
-                </View>
-                <Text style={styles.progressText}>
-                  {progressPercentage === 100 ? 'Formulario Completo ✓' : `Progreso: ${progressPercentage}%`}
-                </Text>
-              </View>
-            </View>
-
+          <View style={styles.submitButtonContainer}>
             <TouchableOpacity
               style={[styles.submitButton, isFormComplete && styles.submitButtonActive]}
               onPress={handleInitiateSend}
@@ -446,341 +370,86 @@ export default function HomeScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {location && (
+          <View style={styles.mapContainer}>
+            <View style={styles.mapCard}>
+              <Text style={styles.mapTitle}>🗺️ Ubicación en el Mapa</Text>
+              <Text style={styles.mapSubtitle}>Esta es la ubicación exacta que fue registrada.</Text>
+              <MapView style={styles.map} region={mapRegion} onRegionChangeComplete={setMapRegion}>
+                <Marker coordinate={location} title="Ubicación del Cliente" description="Ubicación confirmada" />
+              </MapView>
+            </View>
+          </View>
         )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
+// --- Hoja de Estilos ---
 const styles = StyleSheet.create({
-  keyboardAvoidingContainer: {
-    flex: 1,
-  },
-  locationButton: {
-    backgroundColor: '#3B82F6',
-    borderRadius: getResponsiveSize(isSmallDevice ? 8 : 12),
-    paddingVertical: getResponsiveSize(isSmallDevice ? 12 : 16),
-    paddingHorizontal: getResponsiveSize(16),
-    alignItems: 'center',
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  locationButtonDisabled: {
-    backgroundColor: '#D1D5DB',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  scrollContentNoMap: {
-    flexGrow: 1,
-  },
-  scrollContentWithMap: {
-    flexGrow: 1,
-    paddingBottom: getResponsiveSize(20),
-  },
-  containerCentered: {
-    flex: 1,
-    padding: getResponsiveSize(isSmallDevice ? 12 : 16),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  containerWithMap: {
-    padding: getResponsiveSize(isSmallDevice ? 12 : 16),
-    paddingTop: getResponsiveSize(8),
-    paddingBottom: 0,
-  },
-  headerCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: getResponsiveSize(isSmallDevice ? 12 : 16),
-    padding: getResponsiveSize(isSmallDevice ? 16 : 20),
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    width: '100%',
-    maxWidth: 400,
-  },
-  subtitle: {
-    fontSize: getResponsiveSize(isSmallDevice ? 12 : isMediumDevice ? 14 : 16),
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  formCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: getResponsiveSize(isSmallDevice ? 12 : 16),
-    padding: getResponsiveSize(isSmallDevice ? 16 : 20),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    width: '100%',
-    maxWidth: 400,
-  },
-  inputContainer: {
-    marginBottom: getResponsiveSize(isSmallDevice ? 12 : 16),
-  },
-  inputLabel: {
-    fontSize: getResponsiveSize(isSmallDevice ? 13 : isMediumDevice ? 14 : 16),
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: getResponsiveSize(6),
-  },
-  input: {
-    backgroundColor: '#F9FAFB',
-    height: getResponsiveHeight(isSmallDevice ? 44 : isMediumDevice ? 50 : 56),
-    borderColor: '#D1D5DB',
-    borderWidth: 2,
-    borderRadius: getResponsiveSize(isSmallDevice ? 8 : 12),
-    paddingHorizontal: getResponsiveSize(12),
-    fontSize: getResponsiveSize(isSmallDevice ? 14 : 16),
-    color: '#111827',
-  },
-  inputFilled: {
-    borderColor: '#3B82F6',
-    backgroundColor: '#EFF6FF',
-  },
-  locationSection: {
-    marginTop: getResponsiveSize(4),
-  },
-  locationButtonText: {
-    color: '#FFFFFF',
-    fontSize: getResponsiveSize(isSmallDevice ? 13 : isMediumDevice ? 14 : 16),
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: getResponsiveSize(16),
-  },
-  loadingText: {
-    marginTop: getResponsiveSize(8),
-    fontSize: getResponsiveSize(isSmallDevice ? 13 : 16),
-    color: '#6B7280',
-  },
-  mapAndSubmitContainer: {
-    paddingHorizontal: getResponsiveSize(isSmallDevice ? 12 : 16),
-  },
-  mapCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: getResponsiveSize(isSmallDevice ? 12 : 16),
-    padding: getResponsiveSize(isSmallDevice ? 16 : 20),
-    marginTop: getResponsiveSize(8),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  mapTitle: {
-    fontSize: getResponsiveSize(isSmallDevice ? 14 : isMediumDevice ? 16 : 16),
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: getResponsiveSize(2),
-  },
-  mapSubtitle: {
-    fontSize: getResponsiveSize(isSmallDevice ? 11 : isMediumDevice ? 12 : 14),
-    color: '#6B7280',
-    marginBottom: getResponsiveSize(12),
-  },
-  map: {
-    width: '100%',
-    height: getResponsiveHeight(isSmallDevice ? 200 : isMediumDevice ? 225 : 250),
-    borderRadius: getResponsiveSize(isSmallDevice ? 8 : 12),
-    overflow: 'hidden',
-  },
-  submitButton: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: getResponsiveSize(isSmallDevice ? 8 : 12),
-    paddingVertical: getResponsiveSize(isSmallDevice ? 14 : 18),
-    paddingHorizontal: getResponsiveSize(16),
-    alignItems: 'center',
-    marginTop: getResponsiveSize(isSmallDevice ? 12 : 16),
-    width: '100%',
-    maxWidth: 400,
-    alignSelf: 'center',
-    marginBottom: 50,
-  },
-  submitButtonActive: {
-    backgroundColor: '#10B981',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-    marginBottom: 50,
-  },
-  submitButtonText: {
-    fontSize: getResponsiveSize(isSmallDevice ? 13 : isMediumDevice ? 14 : 16),
-    fontWeight: '600',
-    color: '#9CA3AF',
-  },
-  submitButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  progressContainer: {
-    width: '100%',
-    maxWidth: 400,
-    alignItems: 'center',
-    marginTop: getResponsiveSize(isSmallDevice ? 12 : 16),
-  },
-  progressBar: {
-    width: '100%',
-    height: getResponsiveSize(isSmallDevice ? 6 : 8),
-    backgroundColor: '#E5E7EB',
-    borderRadius: getResponsiveSize(4),
-    overflow: 'hidden',
-    marginBottom: getResponsiveSize(6),
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#3B82F6',
-    borderRadius: getResponsiveSize(4),
-  },
-  progressText: {
-    fontSize: getResponsiveSize(isSmallDevice ? 11 : isMediumDevice ? 12 : 14),
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: getResponsiveSize(20),
-  },
-  modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: getResponsiveSize(16),
-    padding: getResponsiveSize(24),
-    width: '100%',
-    maxWidth: 380,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  modalTitle: {
-    fontSize: getResponsiveSize(18),
-    fontWeight: 'bold',
-    color: '#1F2937',
-    textAlign: 'center',
-    marginBottom: getResponsiveSize(12),
-  },
-  modalText: {
-    fontSize: getResponsiveSize(14),
-    color: '#4B5563',
-    textAlign: 'center',
-    lineHeight: getResponsiveSize(22),
-    marginBottom: getResponsiveSize(24),
-  },
-  modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  modalButton: {
-    flex: 1,
-    borderRadius: getResponsiveSize(12),
-    paddingVertical: getResponsiveSize(14),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: getResponsiveSize(6),
-  },
-  modalButtonCancel: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-  modalButtonConfirm: {
-    backgroundColor: '#3B82F6',
-  },
-  modalButtonError: {
-    backgroundColor: '#EF4444',
-  },
-  dataConfirmContainer: {
-    alignSelf: 'stretch',
-    backgroundColor: '#F9FAFB',
-    borderRadius: getResponsiveSize(8),
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: getResponsiveSize(16),
-    marginBottom: getResponsiveSize(24),
-  },
-  dataConfirmText: {
-    fontSize: getResponsiveSize(14),
-    color: '#374151',
-    marginBottom: getResponsiveSize(8),
-  },
-  dataBold: {
-    fontWeight: '600',
-    color: '#111827',
-  },
-  modalButtonText: {
-    fontSize: getResponsiveSize(14),
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalButtonTextCancel: {
-    color: '#4B5563',
-  },
-  // Estilos para el auth
-  authContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#F8FAFC',
-  },
-  authCard: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    alignItems: 'center',
-  },
-  authTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  authSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  authButton: {
-    marginTop: 20,
-    backgroundColor: '#3B82F6',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    width: '100%',
-    alignItems: 'center',
-  },
-  authButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  // Contenedores Principales
+  keyboardAvoidingContainer: { flex: 1 },
+  scrollContainer: { flex: 1, backgroundColor: '#F8FAFC' },
+  scrollContent: { flexGrow: 1, paddingBottom: 50 },
+  mainContainer: { padding: getResponsiveSize(16) },
+
+  // Tarjetas y Formularios
+  headerCard: { backgroundColor: '#FFFFFF', borderRadius: getResponsiveSize(16), padding: getResponsiveSize(20), alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4, width: '100%' },
+  subtitle: { fontSize: getResponsiveSize(14), color: '#6B7280', textAlign: 'center' },
+  formCard: { backgroundColor: '#FFFFFF', borderRadius: getResponsiveSize(16), padding: getResponsiveSize(20), shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4, width: '100%' },
+  inputContainer: { marginBottom: getResponsiveSize(16) },
+  inputLabel: { fontSize: getResponsiveSize(14), fontWeight: '600', color: '#374151', marginBottom: getResponsiveSize(6) },
+  input: { backgroundColor: '#F9FAFB', height: getResponsiveHeight(50), borderColor: '#D1D5DB', borderWidth: 2, borderRadius: getResponsiveSize(12), paddingHorizontal: getResponsiveSize(12), fontSize: getResponsiveSize(16), color: '#111827' },
+  inputFilled: { borderColor: '#3B82F6', backgroundColor: '#EFF6FF' },
+
+  // Botones
+  locationSection: { marginTop: getResponsiveSize(4) },
+  locationButton: { backgroundColor: '#3B82F6', borderRadius: getResponsiveSize(12), paddingVertical: getResponsiveSize(16), alignItems: 'center', shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
+  locationButtonDisabled: { backgroundColor: '#D1D5DB', shadowOpacity: 0, elevation: 0 },
+  locationButtonText: { color: '#FFFFFF', fontSize: getResponsiveSize(16), fontWeight: '600' },
+  submitButtonContainer: { marginTop: getResponsiveSize(20), width: '100%', alignItems: 'center' },
+  submitButton: { backgroundColor: '#E5E7EB', borderRadius: getResponsiveSize(12), paddingVertical: getResponsiveSize(18), paddingHorizontal: getResponsiveSize(16), alignItems: 'center', width: '100%' },
+  submitButtonActive: { backgroundColor: '#10B981', shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
+  submitButtonText: { fontSize: getResponsiveSize(16), fontWeight: '600', color: '#9CA3AF' },
+  submitButtonTextActive: { color: '#FFFFFF' },
+  logoutButton: { marginRight: 15 },
+  logoutButtonText: { color: '#EF4444', fontSize: 16, fontWeight: '700' },
+
+  // Indicadores de Carga
+  loadingContainer: { alignItems: 'center', paddingVertical: getResponsiveSize(16) },
+  loadingText: { marginTop: getResponsiveSize(8), fontSize: getResponsiveSize(16), color: '#6B7280' },
+
+  // Mapa
+  mapContainer: { paddingHorizontal: getResponsiveSize(16), marginTop: getResponsiveSize(8), marginBottom: 30 },
+  mapCard: { backgroundColor: '#FFFFFF', borderRadius: getResponsiveSize(16), padding: getResponsiveSize(20), shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4 },
+  mapTitle: { fontSize: getResponsiveSize(16), fontWeight: 'bold', color: '#1F2937', marginBottom: getResponsiveSize(2) },
+  mapSubtitle: { fontSize: getResponsiveSize(14), color: '#6B7280', marginBottom: getResponsiveSize(12) },
+  map: { width: '100%', height: getResponsiveHeight(250), borderRadius: getResponsiveSize(12), overflow: 'hidden' },
+
+  // Modales
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center', padding: getResponsiveSize(20) },
+  modalContainer: { backgroundColor: '#FFFFFF', borderRadius: getResponsiveSize(16), padding: getResponsiveSize(24), width: '100%', maxWidth: 380, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 10 },
+  modalTitle: { fontSize: getResponsiveSize(18), fontWeight: 'bold', color: '#1F2937', textAlign: 'center', marginBottom: getResponsiveSize(12) },
+  modalText: { fontSize: getResponsiveSize(14), color: '#4B5563', textAlign: 'center', lineHeight: getResponsiveSize(22), marginBottom: getResponsiveSize(24) },
+  modalButtonContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+  modalButton: { flex: 1, borderRadius: getResponsiveSize(12), paddingVertical: getResponsiveSize(14), alignItems: 'center', justifyContent: 'center', marginHorizontal: getResponsiveSize(6) },
+  modalButtonCancel: { backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#D1D5DB' },
+  modalButtonConfirm: { backgroundColor: '#3B82F6' },
+  modalButtonError: { backgroundColor: '#EF4444' },
+  modalButtonText: { fontSize: getResponsiveSize(14), fontWeight: '600', color: '#FFFFFF', textAlign: 'center' },
+  modalButtonTextCancel: { color: '#4B5563' },
+  dataConfirmContainer: { alignSelf: 'stretch', backgroundColor: '#F9FAFB', borderRadius: getResponsiveSize(8), borderWidth: 1, borderColor: '#E5E7EB', padding: getResponsiveSize(16), marginBottom: getResponsiveSize(24) },
+  dataConfirmText: { fontSize: getResponsiveSize(14), color: '#374151', marginBottom: getResponsiveSize(8) },
+  dataBold: { fontWeight: '600', color: '#111827' },
+
+  // Autenticación
+  authContainer: { flex: 1, padding: 20, backgroundColor: '#F8FAFC' },
+  authCard: { marginTop: 20, width: '100%', maxWidth: 400, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5, alignItems: 'center' },
+  authTitle: { fontSize: 18, fontWeight: 'bold', color: '#1F2937', marginBottom: 8 },
+  authSubtitle: { fontSize: 14, color: '#6B7280', marginBottom: 24, textAlign: 'center' },
+  authButton: { marginTop: 20, backgroundColor: '#3B82F6', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, width: '100%', alignItems: 'center' },
+  authButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
 });

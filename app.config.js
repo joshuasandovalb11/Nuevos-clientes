@@ -40,7 +40,7 @@ export default {
       [
         "expo-splash-screen",
         {
-          "image": "./assets.png",
+          "image": "./assets/Tools.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
