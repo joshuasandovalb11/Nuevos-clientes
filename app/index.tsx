@@ -1,19 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as Location from 'expo-location';
-import { useEffect, useState } from 'react';
+import { useNavigation } from 'expo-router';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 const { width, height } = Dimensions.get('window');
 
-// Función para calcular tamaños responsivos
+// Funciones de responsividad
 const getResponsiveSize = (baseSize: number) => {
   const scale = width / 375;
   const newSize = baseSize * scale;
   return Math.max(newSize, baseSize * 0.8);
 };
-
-// Función para calcular alturas responsivas
 const getResponsiveHeight = (baseHeight: number) => {
   const scale = height / 812;
   return Math.max(baseHeight * scale, baseHeight * 0.7);
@@ -23,7 +22,7 @@ const isSmallDevice = width < 360 || height < 640;
 const isMediumDevice = width >= 360 && width < 400;
 
 export default function HomeScreen() {
-  // Estos de autenticacion
+  // Estados de autenticacion
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userPhoneNumber, setUserPhoneNumber] = useState('');
   const [authIsLoading, setAuthIsLoading] = useState(false);
@@ -40,22 +39,59 @@ export default function HomeScreen() {
   });
   const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
   const [isConfirmSendModalVisible, setIsConfirmSendModalVisible] = useState(false);
-  const [isStatusModalVisible, setIsStatusModalVisible] = useState(false); 
+  const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
   const [statusModalContent, setStatusModalContent] = useState({
     title: '',
     message: '',
     isError: false,
   });
 
-  // Funciones de validación
+  const navigation = useNavigation();
 
-  // Funcion de verificacion de usuario
+  const handleLogout = () => {
+    Alert.alert(
+      "Confirmar Salida",
+      "¿Estás seguro de que quieres salir? Se limpiarán todos los datos del formulario.",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "Salir",
+          onPress: () => {
+            setIsAuthenticated(false);
+            setUserPhoneNumber('');
+            setClientName('');
+            setClientNumber('');
+            setLocation(null);
+          },
+          style: "destructive"
+        }
+      ]
+    );
+  };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        isAuthenticated ? (
+          <TouchableOpacity onPress={handleLogout} style={{ marginTop: 5}}>
+            <Text style={{ 
+              color: '#EF4444', fontSize: 16, fontWeight: '700', padding: 4,}}>
+                Salir
+            </Text>
+          </TouchableOpacity>
+        ) : null
+      ),
+    });
+  }, [navigation, isAuthenticated]);
+
   const handleVerifyUser = async () => {
     if (!userPhoneNumber || userPhoneNumber.length !== 10) {
       Alert.alert('Número Inválido', 'Por favor, ingresa tu número de teléfono a 10 dígitos.');
       return;
     }
-
     setAuthIsLoading(true);
     try {
       const response = await fetch('https://backend-email-murex.vercel.app/api/verify-user', {
@@ -63,7 +99,6 @@ export default function HomeScreen() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_phone_number: userPhoneNumber }),
       });
-
       if (response.ok) {
         setIsAuthenticated(true);
       } else {
@@ -77,64 +112,46 @@ export default function HomeScreen() {
     }
   };
 
-  // FUNCIÓN PARA FORMATEAR EL NÚMERO DE TELÉFONO
   const formatPhoneNumber = (text: string) => {
     if (!text) return '';
-
     const numericValue = text.replace(/[^0-9]/g, '');
     const textLength = numericValue.length;
-
-    if (textLength <= 3) {
-      return numericValue;
-    }
-    if (textLength <= 6) {
-      return `${numericValue.slice(0, 3)}-${numericValue.slice(3)}`;
-    }
+    if (textLength <= 3) return numericValue;
+    if (textLength <= 6) return `${numericValue.slice(0, 3)}-${numericValue.slice(3)}`;
     return `${numericValue.slice(0, 3)}-${numericValue.slice(3, 6)}-${numericValue.slice(6, 10)}`;
   };
 
-  // MANEJADOR PARA EL TELÉFONO DEL VENDEDOR (Pantalla de Autenticación)
   const handleUserPhoneNumberChange = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     setUserPhoneNumber(numericValue);
   };
 
-  // Manejo de formato del numero de cliente
   const handleClientNumberChange = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     setClientNumber(numericValue);
   };
 
-  // Manejo del formato del nombre del cliente
   const handleClientNameChange = (text: string) => {
     const validName = text.replace(/[^a-zA-Z\s]/g, '');
     setClientName(validName);
   };
   const formatProperCase = (name: string) => {
-    return name
-      .toLowerCase()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+    return name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
-  // Efectp para pedir el uso de ubicacion
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permiso denegado', 'Se necesita permiso de ubicación para usar esta función.');
-        return;
       }
     })();
   }, []);
 
-  // Manejo para obtener ubicacion
   const handleGetLocation = () => {
     setIsLocationModalVisible(true);
   };
 
-  // Confirmacion de permisos oara obtener ubicacion
   const handleConfirmAndGetLocation = async () => {
     setIsLocationModalVisible(false);
     setIsLoading(true);
@@ -145,89 +162,55 @@ export default function HomeScreen() {
         longitude: currentPosition.coords.longitude,
       };
       setLocation(coords);
-      setMapRegion({
-        ...coords,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-     
+      setMapRegion({ ...coords, latitudeDelta: 0.01, longitudeDelta: 0.01 });
     } catch (error) {
-      setStatusModalContent({
-        title: 'Error de Ubicación',
-        message: 'No se pudo obtener la ubicación. Asegúrate de que tu GPS esté activado.',
-        isError: true,
-      });
+      setStatusModalContent({ title: 'Error de Ubicación', message: 'No se pudo obtener la ubicación. Asegúrate de que tu GPS esté activado.', isError: true });
       setIsStatusModalVisible(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Funcion para inicializar el envio de informacion
   const handleInitiateSend = () => {
     if (!clientNumber || !clientName || !location) {
-        setStatusModalContent({
-            title: 'Datos incompletos',
-            message: 'Por favor, completa todos los campos y obtén la ubicación.',
-            isError: true,
-        });
+        setStatusModalContent({ title: 'Datos incompletos', message: 'Por favor, completa todos los campos y obtén la ubicación.', isError: true });
         setIsStatusModalVisible(true);
         return;
     }
     setIsConfirmSendModalVisible(true);
   };
-  
-  // Funcion que se encarga de mandar la informacion del email
+
   const executeSendEmail = async () => {
     setIsConfirmSendModalVisible(false);
     setIsLoading(true);
-    
     if (!location) return;
-
     const formattedName = formatProperCase(clientName.trim());
-
     const payload = {
         client_number: clientNumber.trim(),
         client_name: formattedName,
         latitude: location.latitude,
         longitude: location.longitude,
     };
-
     try {
         const response = await fetch('https://backend-email-murex.vercel.app/api/send-mail', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        
         const result = await response.json();
-
         if (!response.ok) {
             throw new Error(result.error || 'Ocurrió un error desconocido en el servidor.');
         }
-
-        setStatusModalContent({
-            title: '✅ ¡Éxito!',
-            message: 'El registro se ha enviado correctamente.',
-            isError: false,
-        });
+        setStatusModalContent({ title: '✅ ¡Éxito!', message: 'El registro se ha enviado correctamente.', isError: false });
         setIsStatusModalVisible(true);
-
     } catch (error: any) {
-        setStatusModalContent({
-            title: '❌ Error de Envío',
-            message: `No se pudo enviar el registro: ${error.message}`,
-            isError: true,
-        });
+        setStatusModalContent({ title: '❌ Error de Envío', message: `No se pudo enviar el registro: ${error.message}`, isError: true });
         setIsStatusModalVisible(true);
     } finally {
         setIsLoading(false);
     }
   };
 
-  // Funcion para cerrar el modal y limpiar la informacion en el form
   const handleCloseStatusModal = () => {
     setIsStatusModalVisible(false);
     if (!statusModalContent.isError) {

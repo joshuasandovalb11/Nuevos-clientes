@@ -21,7 +21,12 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBcR-ftvLs-vF5eFCyP1vDo1odGf4hVXlQ"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
@@ -43,7 +48,12 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Permitir que $(PRODUCT_NAME) use tu ubicación para registrar la posición geográfica de los nuevos clientes.",
-           "isAndroidBackgroundLocationEnabled": false
+          "isAndroidBackgroundLocationEnabled": false,
+          "foregroundService": {
+            "notificationTitle": "Clientes Nuevos está usando tu ubicación",
+            "notificationBody": "Para registrar la posición geográfica de los nuevos clientes.",
+            "notificationColor": "#ffffff"
+          }
         }
       ],
       "expo-mail-composer"
