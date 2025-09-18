@@ -1,74 +1,79 @@
-import 'dotenv/config';
+import "dotenv/config";
 
 export default {
-  "expo": {
-    "name": "Clientes Nuevos",
-    "slug": "clientes-nuevos",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/Tools.png",
-    "scheme": "clientesnuevos",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
+  expo: {
+    name: "GPS Clientes",
+    slug: "clientes-nuevos",
+    version: "1.0.1",
+    orientation: "portrait",
+    icon: "./assets/Tools.png",
+    scheme: "clientesnuevos",
+    userInterfaceStyle: "automatic",
+    newArchEnabled: true,
+    ios: {
+      supportsTablet: true,
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/Tools.png",
-        "backgroundColor": "#ffffff"
+    android: {
+      adaptiveIcon: {
+        foregroundImage: "./assets/Tools.png",
+        backgroundColor: "#ffffff",
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.erick.sandoval10.clientesnuevos",
-      "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ],
-      "config": {
-        "googleMaps": {
-          "apiKey": process.env.Maps_API_KEY
-        }
-      }
+      edgeToEdgeEnabled: true,
+      package: "com.erick.sandoval10.clientesnuevos",
+      permissions: ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      config: {
+        googleMaps: {
+          apiKey: process.env.Maps_API_KEY,
+        },
+      },
     },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+    web: {
+      bundler: "metro",
+      output: "static",
+      favicon: "./assets/images/favicon.png",
     },
-    "plugins": [
+    plugins: [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/Tools.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
-        }
+          image: "./assets/Tools.png",
+          imageWidth: 200,
+          resizeMode: "contain",
+          backgroundColor: "#ffffff",
+        },
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Permitir que $(PRODUCT_NAME) use tu ubicación para registrar la posición geográfica de los nuevos clientes.",
-          "isAndroidBackgroundLocationEnabled": false,
-          "foregroundService": {
-            "notificationTitle": "Clientes Nuevos está usando tu ubicación",
-            "notificationBody": "Para registrar la posición geográfica de los nuevos clientes.",
-            "notificationColor": "#ffffff"
-          }
-        }
+          locationAlwaysAndWhenInUsePermission:
+            "Permitir que $(PRODUCT_NAME) use tu ubicación para registrar la posición geográfica de los nuevos clientes.",
+          isAndroidBackgroundLocationEnabled: false,
+          foregroundService: {
+            notificationTitle: "Clientes Nuevos está usando tu ubicación",
+            notificationBody:
+              "Para registrar la posición geográfica de los nuevos clientes.",
+            notificationColor: "#ffffff",
+          },
+        },
       ],
-      "expo-mail-composer"
+      "expo-mail-composer",
     ],
-    "experiments": {
-      "typedRoutes": true
+    experiments: {
+      typedRoutes: true,
     },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "6d4b29bb-2f6c-40ac-ad65-6b4f94a165e5"
-      }
+    extra: {
+      router: {},
+      eas: {
+        projectId: "6d4b29bb-2f6c-40ac-ad65-6b4f94a165e5",
+      },
     },
-    "owner": "erick.sandoval10"
-  }
+    updates: {
+      url: "https://u.expo.dev/6d4b29bb-2f6c-40ac-ad65-6b4f94a165e5",
+    },
+    runtimeVersion: {
+      policy: "appVersion",
+    },
+    owner: "erick.sandoval10",
+  },
 };
