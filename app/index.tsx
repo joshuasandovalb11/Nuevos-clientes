@@ -454,7 +454,10 @@ export default function HomeScreen() {
             style={[styles.headerCard, { marginBottom: getResponsiveSize(12) }]}
           >
             <Text style={styles.welcomeTitle}>
-              Hola, {formatProperCase(salespersonInfo?.name) || "Vendedor"}
+              Hola,{" "}
+              <Text style={[styles.welcomeTitle, { color: "#3B82F6" }]}>
+                {formatProperCase(salespersonInfo?.name) || "Vendedor"}
+              </Text>
             </Text>
             <Text style={styles.subtitle}>
               Completa la información del nuevo cliente
