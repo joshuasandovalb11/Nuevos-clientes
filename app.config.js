@@ -58,6 +58,7 @@ export default {
         },
       ],
       "expo-mail-composer",
+      "expo-font",
     ],
     experiments: {
       typedRoutes: true,
