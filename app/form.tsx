@@ -1,8 +1,10 @@
 import * as Location from "expo-location";
 import { Stack, router, useLocalSearchParams } from "expo-router";
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect, useRef, useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ClientForm } from "../src/components/form/ClientForm";
 import { LocationMap } from "../src/components/map/LocationMap";
@@ -13,6 +15,7 @@ import { StatusModal } from "../src/components/modals/StatusModal";
 
 import { registerClient } from "../src/services/api";
 import { formatClientPhone, formatProperCase, getResponsiveSize } from "../src/utils/helpers";
+import { clearSessionToken } from "../src/utils/storage";
 
 export default function FormScreen() {
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
@@ -26,6 +29,7 @@ export default function FormScreen() {
   const [clientNumber, setClientNumber] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -46,39 +50,28 @@ export default function FormScreen() {
   const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
   const [isConfirmSendModalVisible, setIsConfirmSendModalVisible] = useState(false);
   const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
-  const [statusModalContent, setStatusModalContent] = useState({
+  const [statusModalContent, setStatusModalContent] = useState<{
+    title: string;
+    message: string;
+    isError: boolean;
+    action?: "LOGOUT" | "NONE";
+  }>({
     title: "",
     message: "",
     isError: false,
   });
-
-  // --- Lógica de Salida ---
-  const handleLogout = () => {
-    Alert.alert(
-      "Confirmar Salida",
-      "¿Estás seguro de que quieres salir? Se limpiarán todos los datos no guardados.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Salir",
-          onPress: () => {
-            router.replace("/");
-          },
-          style: "destructive",
-        },
-      ]
-    );
-  };
 
   // --- Lógica de Ubicación ---
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          "Permiso denegado",
-          "Se necesita permiso de ubicación para usar esta función."
-        );
+        setStatusModalContent({
+          title: "Permiso denegado",
+          message: "Se necesita permiso de ubicación para usar esta función.",
+          isError: true,
+        });
+        setIsStatusModalVisible(true);
       }
     })();
   }, []);
@@ -87,9 +80,16 @@ export default function FormScreen() {
     setIsLocationModalVisible(false);
     setIsLocationLoading(true);
     try {
-      const position = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
+      let position;
+      try {
+        // Intento 1: Alta precisión (tarda más, consume más batería) con timeout de 5s
+        const locationPromise = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("GPS_TIMEOUT")), 5000));
+        position = await Promise.race([locationPromise, timeoutPromise]) as Location.LocationObject;
+      } catch {
+        // Intento 2: Fallback a precisión media (torres celulares/wifi) si el GPS puro falla
+        position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      }
       const coords = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
@@ -111,6 +111,26 @@ export default function FormScreen() {
     }
   };
 
+  // Validación de teléfono en tiempo real
+  useEffect(() => {
+    const rawPhone = clientPhone.replace(/\D/g, "");
+    if (rawPhone.length >= 10) {
+      const isRepeated = /^(\d)\1{9}$/.test(rawPhone);
+      if (isRepeated) {
+        setPhoneError("No uses el mismo número repetido.");
+        return;
+      }
+      const phoneNumber = parsePhoneNumberFromString(rawPhone, 'MX');
+      if (!phoneNumber || !phoneNumber.isValid()) {
+        setPhoneError("El número ingresado no es un celular válido.");
+        return;
+      }
+      setPhoneError("");
+    } else {
+      setPhoneError("");
+    }
+  }, [clientPhone]);
+
   const handleInitiateSend = () => {
     if (!isBasicInfoFilled) {
       setStatusModalContent({
@@ -122,7 +142,17 @@ export default function FormScreen() {
       return;
     }
 
-    if (contactMethod === "phone" && !hasPhone) {
+    if (phoneError) {
+      setStatusModalContent({
+        title: "Teléfono Inválido",
+        message: phoneError,
+        isError: true,
+      });
+      setIsStatusModalVisible(true);
+      return;
+    }
+
+    if ((contactMethod === "phone" || contactMethod === "both") && !hasPhone) {
       setStatusModalContent({
         title: "Datos incompletos",
         message: "Por favor, ingresa el teléfono del cliente.",
@@ -132,20 +162,10 @@ export default function FormScreen() {
       return;
     }
 
-    if (contactMethod === "gps" && !hasLocation) {
+    if ((contactMethod === "gps" || contactMethod === "both") && !hasLocation) {
       setStatusModalContent({
         title: "Datos incompletos",
         message: "Por favor, confirma la ubicación.",
-        isError: true,
-      });
-      setIsStatusModalVisible(true);
-      return;
-    }
-
-    if (contactMethod === "both" && (!hasPhone || !hasLocation)) {
-      setStatusModalContent({
-        title: "Datos incompletos",
-        message: "Por favor, proporciona el teléfono y la ubicación.",
         isError: true,
       });
       setIsStatusModalVisible(true);
@@ -178,6 +198,18 @@ export default function FormScreen() {
       });
       setIsStatusModalVisible(true);
     } catch (error: any) {
+      if (error.message === "AUTH_ERROR") {
+        await clearSessionToken();
+        setStatusModalContent({
+          title: "Sesión Revocada",
+          message: "Tu acceso ha sido eliminado o el dispositivo ya no está autorizado. Por favor, vuelve a vincular tu celular.",
+          isError: true,
+          action: "LOGOUT"
+        });
+        setIsStatusModalVisible(true);
+        return;
+      }
+
       setStatusModalContent({
         title: "❌ Error de Envío",
         message: `No se pudo enviar el registro: ${error.message}`,
@@ -191,6 +223,12 @@ export default function FormScreen() {
 
   const handleCloseStatusModal = () => {
     setIsStatusModalVisible(false);
+
+    if (statusModalContent.action === "LOGOUT") {
+      router.replace("/");
+      return;
+    }
+
     if (!statusModalContent.isError) {
       setClientName("");
       setClientPhone("");
@@ -204,23 +242,17 @@ export default function FormScreen() {
   const hasPhone = clientPhone.replace(/[^0-9]/g, "").length === 10;
   const hasLocation = location !== null;
 
-  let isContactComplete = false;
-  if (contactMethod === "phone") isContactComplete = hasPhone;
-  else if (contactMethod === "gps") isContactComplete = hasLocation;
-  else if (contactMethod === "both") isContactComplete = hasPhone && hasLocation;
-
-  const isFormComplete = isBasicInfoFilled && isContactComplete;
+  const isFormComplete =
+    isBasicInfoFilled && !phoneError &&
+    (contactMethod === "both" ? hasPhone && hasLocation : true) &&
+    (contactMethod === "phone" ? hasPhone : true) &&
+    (contactMethod === "gps" ? hasLocation : true);
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
       <Stack.Screen
         options={{
-          headerShown: true,
-          headerRight: () => (
-            <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-              <Text style={styles.logoutButtonText}>Salir</Text>
-            </TouchableOpacity>
-          ),
+          headerShown: false,
         }}
       />
       <KeyboardAwareScrollView
@@ -271,6 +303,7 @@ export default function FormScreen() {
             clientNumber={clientNumber}
             clientName={clientName}
             clientPhone={clientPhone}
+            phoneError={phoneError}
             onClientNumberChange={(text) => setClientNumber(text.replace(/[^0-9]/g, ""))}
             onClientNameChange={(text) => setClientName(text.replace(/[^a-zA-Z\s]/g, ""))}
             onClientPhoneChange={(text) => setClientPhone(formatClientPhone(text))}
@@ -291,26 +324,18 @@ export default function FormScreen() {
           <LocationMap location={location} mapRegion={mapRegion} />
         )}
       </KeyboardAwareScrollView>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  logoutButton: {
-  },
-  logoutButtonText: {
-    color: "#EF4444",
-    fontFamily: "Roboto_500Medium",
-    fontSize: getResponsiveSize(14),
-  },
   scrollContainer: {
     flex: 1,
     backgroundColor: "#F8FAFC",
   },
   scrollContent: {
     paddingHorizontal: getResponsiveSize(20),
-    paddingTop: getResponsiveSize(4),
-    paddingBottom: getResponsiveSize(40),
+    paddingVertical: getResponsiveSize(30),
   },
   mainContainer: {
     width: "100%",
