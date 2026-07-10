@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from "react-native";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { styles as sharedStyles } from "./LocationModal"; // Reusing styles
 
 interface StatusModalProps {

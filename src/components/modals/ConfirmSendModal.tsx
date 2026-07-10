@@ -1,6 +1,6 @@
 import React from "react";
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from "react-native";
-import { getResponsiveSize, formatProperCase } from "../../utils/helpers";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { formatProperCase, getResponsiveSize } from "../../utils/helpers";
 import { styles as sharedStyles } from "./LocationModal"; // Reusing styles
 
 interface ConfirmSendModalProps {
@@ -29,7 +29,7 @@ export const ConfirmSendModal: React.FC<ConfirmSendModalProps> = ({
     >
       <View style={sharedStyles.modalOverlay}>
         <View style={sharedStyles.modalContainer}>
-          <Text style={sharedStyles.modalTitle}>✉️ Confirmar Envío</Text>
+          <Text style={sharedStyles.modalTitle}>Confirmar Envío</Text>
           <Text style={sharedStyles.modalText}>
             Se enviará un correo con la siguiente información. ¿Deseas continuar?
           </Text>
