@@ -17,6 +17,7 @@ interface ClientFormProps {
   onClientNumberChange: (text: string) => void;
   onClientNameChange: (text: string) => void;
   onClientPhoneChange: (text: string) => void;
+  phoneError?: string;
   isLocationLoading: boolean;
   isSubmitLoading: boolean;
   isStatusModalVisible: boolean;
@@ -36,6 +37,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
   onClientNumberChange,
   onClientNameChange,
   onClientPhoneChange,
+  phoneError,
   isLocationLoading,
   isSubmitLoading,
   isStatusModalVisible,
@@ -117,20 +119,33 @@ export const ClientForm: React.FC<ClientFormProps> = ({
         {(contactMethod === "phone" || contactMethod === "both") && (
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Teléfono celular del propietario del negocio</Text>
-            <View style={[styles.inputWrapper, clientPhone ? styles.inputWrapperFilled : null]}>
-              <View style={[styles.iconBox, clientPhone ? styles.iconBoxFilled : null]}>
-                <Feather name="phone" size={18} color={clientPhone ? "#3B82F6" : "#9CA3AF"} />
+            <View style={[
+              styles.inputWrapper, 
+              clientPhone ? styles.inputWrapperFilled : null,
+              phoneError ? { borderColor: "#EF4444", backgroundColor: "#FEF2F2" } : null
+            ]}>
+              <View style={[
+                styles.iconBox, 
+                clientPhone ? styles.iconBoxFilled : null,
+                phoneError ? { backgroundColor: "#FCA5A5", borderRightColor: "#EF4444" } : null
+              ]}>
+                <Feather name="phone" size={18} color={phoneError ? "#991B1B" : clientPhone ? "#3B82F6" : "#9CA3AF"} />
               </View>
               <TextInput
-                style={styles.input}
+                style={[styles.input, phoneError ? { color: "#991B1B" } : null]}
                 placeholder="Ej: (664)-123-4567"
                 value={clientPhone}
                 onChangeText={onClientPhoneChange}
                 keyboardType="phone-pad"
                 maxLength={14}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={phoneError ? "#F87171" : "#9CA3AF"}
               />
             </View>
+            {phoneError ? (
+              <Text style={{ color: "#EF4444", fontSize: 12, marginTop: 6, marginLeft: 4 }}>
+                {phoneError}
+              </Text>
+            ) : null}
           </View>
         )}
 
