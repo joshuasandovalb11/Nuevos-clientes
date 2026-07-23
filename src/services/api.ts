@@ -1,7 +1,10 @@
-// const BASE_URL = "https://backend-email-murex.vercel.app/api";
+// src/services/api.ts
 import { getSessionToken } from "../utils/storage";
-const BASE_URL = "http://192.168.1.126:3000/api";
-const APP_SECRET = "TME-Secret-2026";
+
+const PROD_URL = process.env.EXPO_PUBLIC_API_URL || "https://backend-email-murex.vercel.app/api";
+const LOCAL_URL = "http://192.168.1.126:3000/api";
+const BASE_URL = __DEV__ ? LOCAL_URL : PROD_URL;
+const APP_SECRET = process.env.EXPO_PUBLIC_APP_SECRET || "TME-Secret-2026";
 
 const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 15000) => {
   const headers = {
@@ -10,7 +13,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout 
   };
 
   const fetchPromise = fetch(url, { ...options, headers });
-  
+
   const timeoutPromise = new Promise<Response>((_, reject) => {
     setTimeout(() => reject(new Error("TIMEOUT")), timeout);
   });
