@@ -1,3 +1,4 @@
+import * as Cellular from 'expo-cellular';
 import * as Device from "expo-device";
 import { Stack, router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -61,11 +62,23 @@ export default function LoginScreen() {
       return;
     }
 
+    try {
+      const carrier = await Cellular.getCarrierNameAsync();
+      const mcc = await Cellular.getMobileCountryCodeAsync();
+
+      if (!mcc && !carrier) {
+        showErrorModal("SIM Requerida", "Se requiere tener una tarjeta SIM insertada en este dispositivo para poder iniciar sesión.");
+        return;
+      }
+    } catch (e) {
+      console.warn("No se pudo verificar la SIM", e);
+    }
+
     setAuthIsLoading(true);
     try {
       Keyboard.dismiss();
 
-      try { await resetSms(userPhoneNumber); } catch (e) { /* ignorar si falla el reset */ }
+      try { await resetSms(userPhoneNumber); } catch { /* ignorar si falla el reset */ }
 
       await requestSms(userPhoneNumber, APP_ID);
       setStep('pin');

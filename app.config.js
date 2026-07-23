@@ -20,7 +20,7 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: "com.erick.sandoval10.clientesnuevos",
-      permissions: ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      permissions: ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "REQUEST_INSTALL_PACKAGES"],
       config: {
         googleMaps: {
           apiKey: process.env.Maps_API_KEY,
