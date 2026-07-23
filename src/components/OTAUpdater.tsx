@@ -23,7 +23,7 @@ export const OTAUpdater = () => {
     if (Platform.OS !== 'android') return; // Sideloading nativo solo funciona en Android
 
     try {
-      const response = await fetch('http://toolsdemexico.net:3001/updates/v2/registro-ubicacion/android/android/estable/manifest');
+      const response = await fetch('http://toolsdemexico.net:3001/updates/v2/registrar-clientes/android/android/estable/manifest');
       if (!response.ok) return; // Si da 404, no hay actualización
 
       const data: UpdateManifest = await response.json();
