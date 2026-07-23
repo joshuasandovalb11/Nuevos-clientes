@@ -1,3 +1,4 @@
+// src/components/form/ClientForm.tsx
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import {
@@ -69,6 +70,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               onChangeText={onClientNumberChange}
               keyboardType="numeric"
               placeholderTextColor="#9CA3AF"
+              contextMenuHidden={true}
             />
           </View>
         </View>
@@ -86,6 +88,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               onChangeText={onClientNameChange}
               keyboardType="default"
               placeholderTextColor="#9CA3AF"
+              contextMenuHidden={true}
             />
           </View>
         </View>
@@ -120,12 +123,12 @@ export const ClientForm: React.FC<ClientFormProps> = ({
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Teléfono celular del propietario del negocio</Text>
             <View style={[
-              styles.inputWrapper, 
+              styles.inputWrapper,
               clientPhone ? styles.inputWrapperFilled : null,
               phoneError ? { borderColor: "#EF4444", backgroundColor: "#FEF2F2" } : null
             ]}>
               <View style={[
-                styles.iconBox, 
+                styles.iconBox,
                 clientPhone ? styles.iconBoxFilled : null,
                 phoneError ? { backgroundColor: "#FCA5A5", borderRightColor: "#EF4444" } : null
               ]}>
@@ -139,6 +142,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
                 keyboardType="phone-pad"
                 maxLength={14}
                 placeholderTextColor={phoneError ? "#F87171" : "#9CA3AF"}
+                contextMenuHidden={true}
               />
             </View>
             {phoneError ? (

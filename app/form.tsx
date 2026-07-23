@@ -305,7 +305,7 @@ export default function FormScreen() {
             clientPhone={clientPhone}
             phoneError={phoneError}
             onClientNumberChange={(text) => setClientNumber(text.replace(/[^0-9]/g, ""))}
-            onClientNameChange={(text) => setClientName(text.replace(/[^a-zA-Z\s]/g, ""))}
+            onClientNameChange={(text) => setClientName(text.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, ""))}
             onClientPhoneChange={(text) => setClientPhone(formatClientPhone(text))}
             isLocationLoading={isLocationLoading}
             isSubmitLoading={isSubmitLoading}
