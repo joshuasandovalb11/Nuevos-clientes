@@ -1,7 +1,9 @@
+// src/components/auth/AuthScreen.tsx
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   StyleSheet,
   Text,
   TextInput,
@@ -44,7 +46,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   onContinueToForm,
 }) => {
   const [timer, setTimer] = useState(40);
-  const inputRef = useRef<TextInput>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number>(0);
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+  const inputRefs = useRef<(TextInput | null)[]>([]);
+
+  useEffect(() => {
+    if (pin === "") {
+      setOtp(Array(6).fill(""));
+    }
+  }, [pin]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -82,43 +92,74 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     );
   };
 
+  const handleOtpChange = (text: string, index: number) => {
+    const cleanText = text.replace(/[^0-9]/g, "");
+
+    if (cleanText.length > 1) {
+      const pasted = cleanText.slice(0, 6).split("");
+      const newOtp = Array(6).fill("");
+      pasted.forEach((char, i) => { newOtp[i] = char; });
+      setOtp(newOtp);
+      onPinChange(newOtp.join(''));
+
+      if (pasted.length === 6) {
+        Keyboard.dismiss();
+      }
+      return;
+    }
+
+    const newOtp = [...otp];
+    newOtp[index] = cleanText.slice(-1);
+
+    setOtp(newOtp);
+    onPinChange(newOtp.join(''));
+
+    if (cleanText !== "" && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyPress = (e: any, index: number) => {
+    if (e.nativeEvent.key === 'Backspace' && otp[index] === "" && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+      const newOtp = [...otp];
+      newOtp[index - 1] = "";
+      setOtp(newOtp);
+      onPinChange(newOtp.join(''));
+    }
+  };
+
   const renderPinBoxes = () => {
-    const pinLength = 6;
-    const pinArray = pin.split('');
-
     return (
-      <TouchableOpacity
-        activeOpacity={1}
-        style={styles.pinBoxesContainer}
-        onPress={() => inputRef.current?.focus()}
-      >
-        {[...Array(pinLength)].map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.pinBox,
-              pin.length === index && styles.pinBoxActive,
-              pinArray[index] && styles.pinBoxFilled
-            ]}
-          >
-            <Text style={styles.pinBoxText}>
-              {pinArray[index] || ""}
-            </Text>
-          </View>
-        ))}
+      <View style={styles.pinBoxesContainer}>
+        {otp.map((digit, index) => {
+          const isActive = focusedIndex === index;
 
-        <TextInput
-          ref={inputRef}
-          style={styles.hiddenInput}
-          value={pin}
-          onChangeText={onPinChange}
-          keyboardType="number-pad"
-          textContentType="oneTimeCode"
-          maxLength={6}
-          editable={!isLoading}
-          autoFocus={step === 'pin'}
-        />
-      </TouchableOpacity>
+          return (
+            <TextInput
+              key={index}
+              ref={(ref) => { inputRefs.current[index] = ref; }}
+              style={[
+                styles.pinBox,
+                styles.pinBoxText,
+                isActive && styles.pinBoxActive,
+                digit !== "" && !isActive && styles.pinBoxFilled
+              ]}
+              value={digit}
+              onFocus={() => setFocusedIndex(index)}
+              onChangeText={(text) => handleOtpChange(text, index)}
+              onKeyPress={(e) => handleOtpKeyPress(e, index)}
+              keyboardType="number-pad"
+              textContentType={index === 0 ? "oneTimeCode" : "none"}
+              maxLength={6}
+              editable={!isLoading}
+              autoFocus={step === 'pin' && index === 0}
+              contextMenuHidden={true}
+              caretHidden={true}
+            />
+          );
+        })}
+      </View>
     );
   };
 
@@ -151,6 +192,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   maxLength={12}
                   placeholderTextColor="#9CA3AF"
                   editable={!isLoading}
+                  contextMenuHidden={true}
                 />
                 {isLoading ? (
                   <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
@@ -307,13 +349,7 @@ const styles = StyleSheet.create({
     fontSize: getResponsiveSize(20),
     fontFamily: "Poppins_700Bold",
     color: "#1F2937",
-  },
-  hiddenInput: {
-    position: 'absolute',
-    opacity: 0,
-    width: '100%',
-    height: '100%',
-    zIndex: 99,
+    textAlign: "center",
   },
   successContainer: {
     alignItems: "center",
