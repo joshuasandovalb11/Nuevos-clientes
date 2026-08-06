@@ -20,6 +20,7 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: "com.erick.sandoval10.clientesnuevos",
+      versionCode: 2,
       permissions: ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "REQUEST_INSTALL_PACKAGES"],
       config: {
         googleMaps: {
