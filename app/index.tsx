@@ -1,7 +1,7 @@
 import * as Cellular from 'expo-cellular';
 import * as Device from "expo-device";
 import { Stack, router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Keyboard, View } from "react-native";
 import { AuthScreen } from "../src/components/auth/AuthScreen";
 import { StatusModal } from "../src/components/modals/StatusModal";
@@ -30,31 +30,29 @@ export default function LoginScreen() {
   };
 
   useEffect(() => {
-    checkExistingSession();
-  }, []);
-
-  const checkExistingSession = async () => {
-    try {
-      const token = await getSessionToken();
-      if (token) {
-        // Si hay token, nos saltamos el login y vamos al formulario
-        const userInfo = await getUserInfo();
-        router.replace({
-          pathname: "/form",
-          params: {
-            salespersonName: userInfo?.name || "Vendedor",
-            salespersonPhone: userInfo?.phone || ""
-          }
-        });
-      } else {
-        // Aseguramos que el deviceUuid se genere si es primera vez
-        await getDeviceUuid();
+    const checkExistingSession = async () => {
+      try {
+        const token = await getSessionToken();
+        if (token) {
+          const userInfo = await getUserInfo();
+          router.replace({
+            pathname: "/form",
+            params: {
+              salespersonName: userInfo?.name || "Vendedor",
+              salespersonPhone: userInfo?.phone || ""
+            }
+          });
+        } else {
+          await getDeviceUuid();
+          setIsAppLoading(false);
+        }
+      } catch {
         setIsAppLoading(false);
       }
-    } catch {
-      setIsAppLoading(false);
-    }
-  };
+    };
+
+    checkExistingSession();
+  }, []);
 
   const handleRequestSms = async () => {
     if (!userPhoneNumber || userPhoneNumber.length !== 10) {
@@ -150,7 +148,7 @@ export default function LoginScreen() {
 
   if (isAppLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F8FAFC" }}>
+      <View className="flex-1 justify-center items-center bg-[#F8FAFC]">
         <ActivityIndicator size="large" color="#3B82F6" />
       </View>
     );

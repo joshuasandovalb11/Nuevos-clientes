@@ -1,3 +1,4 @@
+import "../global.css";
 import { Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { Roboto_400Regular, Roboto_500Medium } from '@expo-google-fonts/roboto';
 import * as Cellular from 'expo-cellular';
@@ -5,7 +6,7 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useRef } from 'react';
-import { AppState, StatusBar, StyleSheet } from 'react-native';
+import { AppState, StatusBar } from 'react-native';
 import { clearSessionToken, getSessionToken } from '../src/utils/storage';
 import { OTAUpdater } from '../src/components/OTAUpdater';
 
@@ -86,7 +87,11 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: "#F8FAFC" },
-          headerTitleStyle: styles.headerTitle,
+          headerTitleStyle: {
+            fontFamily: 'Poppins_700Bold',
+            fontSize: 16,
+            color: '#1F2937',
+          },
           headerShadowVisible: false,
         }}
       >
@@ -107,12 +112,3 @@ export default function RootLayout() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  headerTitle: {
-    fontFamily: 'Poppins_700Bold',
-    fontSize: 16,
-    color: '#1F2937',
-    letterSpacing: 0.2,
-  },
-});

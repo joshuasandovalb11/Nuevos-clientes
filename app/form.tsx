@@ -1,8 +1,8 @@
 import * as Location from "expo-location";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -29,7 +29,6 @@ export default function FormScreen() {
   const [clientNumber, setClientNumber] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [phoneError, setPhoneError] = useState("");
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -112,23 +111,19 @@ export default function FormScreen() {
   };
 
   // Validación de teléfono en tiempo real
-  useEffect(() => {
+  const phoneError = useMemo(() => {
     const rawPhone = clientPhone.replace(/\D/g, "");
     if (rawPhone.length >= 10) {
       const isRepeated = /^(\d)\1{9}$/.test(rawPhone);
       if (isRepeated) {
-        setPhoneError("No uses el mismo número repetido.");
-        return;
+        return "No uses el mismo número repetido.";
       }
       const phoneNumber = parsePhoneNumberFromString(rawPhone, 'MX');
       if (!phoneNumber || !phoneNumber.isValid()) {
-        setPhoneError("El número ingresado no es un celular válido.");
-        return;
+        return "El número ingresado no es un celular válido.";
       }
-      setPhoneError("");
-    } else {
-      setPhoneError("");
     }
+    return "";
   }, [clientPhone]);
 
   const handleInitiateSend = () => {
@@ -249,7 +244,7 @@ export default function FormScreen() {
     (contactMethod === "gps" ? hasLocation : true);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
+    <SafeAreaView className="flex-1 bg-[#F8FAFC]">
       <Stack.Screen
         options={{
           headerShown: false,
@@ -257,8 +252,11 @@ export default function FormScreen() {
       />
       <KeyboardAwareScrollView
         ref={scrollViewRef}
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
+        style={{ flex: 1, backgroundColor: "#F8FAFC" }}
+        contentContainerStyle={{
+          paddingHorizontal: getResponsiveSize(20),
+          paddingVertical: getResponsiveSize(30),
+        }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
@@ -289,12 +287,27 @@ export default function FormScreen() {
 
         <LoadingModal isVisible={isSubmitLoading} />
 
-        <View style={styles.mainContainer}>
-          <View style={styles.headerCard}>
-            <Text style={styles.welcomeTitle}>
-              Hola, <Text style={styles.welcomeUserName}>{salespersonName.split(" ")[0]}</Text>
+        <View className="w-full max-w-[600px] self-center">
+          <View className="mb-1 items-center justify-center">
+            <Text
+              className="font-poppins-bold text-gray-800"
+              style={{ fontSize: getResponsiveSize(20) }}
+            >
+              Hola,{" "}
+              <Text
+                className="font-poppins-bold text-blue-500"
+                style={{ fontSize: getResponsiveSize(20) }}
+              >
+                {salespersonName.split(" ")[0]}
+              </Text>
             </Text>
-            <Text style={styles.welcomeSubtitle}>
+            <Text
+              className="font-roboto text-gray-500 text-center"
+              style={{
+                fontSize: getResponsiveSize(14),
+                lineHeight: getResponsiveSize(20),
+              }}
+            >
               Completa el formulario para registrar un nuevo cliente.
             </Text>
           </View>
@@ -327,42 +340,3 @@ export default function FormScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-  },
-  scrollContent: {
-    paddingHorizontal: getResponsiveSize(20),
-    paddingVertical: getResponsiveSize(30),
-  },
-  mainContainer: {
-    width: "100%",
-    maxWidth: 600,
-    alignSelf: "center",
-  },
-  headerCard: {
-    marginBottom: getResponsiveSize(4),
-    alignContent: "center",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  welcomeTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: getResponsiveSize(20),
-    color: "#1F2937",
-  },
-  welcomeUserName: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: getResponsiveSize(20),
-    color: "#3B82F6",
-  },
-  welcomeSubtitle: {
-    fontFamily: "Roboto_400Regular",
-    fontSize: getResponsiveSize(14),
-    color: "#6B7280",
-    lineHeight: getResponsiveSize(20),
-    textAlign: "center",
-  },
-});

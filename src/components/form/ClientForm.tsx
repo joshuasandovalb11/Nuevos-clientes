@@ -3,7 +3,6 @@ import { Feather } from "@expo/vector-icons";
 import React from "react";
 import {
   ActivityIndicator,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -51,20 +50,62 @@ export const ClientForm: React.FC<ClientFormProps> = ({
   onContactMethodChange,
 }) => {
   return (
-    <View style={styles.container}>
-      <View style={styles.formCard}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Información Obligatoria</Text>
+    <View className="w-full">
+      <View
+        className="w-full"
+        style={{
+          borderRadius: getResponsiveSize(16),
+          padding: getResponsiveSize(20),
+          marginBottom: getResponsiveSize(10),
+        }}
+      >
+        <View style={{ marginBottom: getResponsiveSize(8) }}>
+          <Text
+            className="font-poppins-bold text-gray-600 uppercase tracking-wider"
+            style={{ fontSize: getResponsiveSize(14) }}
+          >
+            Información Obligatoria
+          </Text>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Número de cliente</Text>
-          <View style={[styles.inputWrapper, clientNumber ? styles.inputWrapperFilled : null]}>
-            <View style={[styles.iconBox, clientNumber ? styles.iconBoxFilled : null]}>
+        <View style={{ marginBottom: getResponsiveSize(14) }}>
+          <Text
+            className="font-roboto text-gray-700"
+            style={{
+              fontSize: getResponsiveSize(13),
+              marginBottom: getResponsiveSize(6),
+            }}
+          >
+            Número de cliente
+          </Text>
+          <View
+            className={`flex-row items-center border overflow-hidden ${
+              clientNumber
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 bg-gray-50"
+            }`}
+            style={{ borderRadius: getResponsiveSize(12) }}
+          >
+            <View
+              className={`justify-center items-center border-r ${
+                clientNumber
+                  ? "bg-blue-100 border-r-blue-500"
+                  : "border-r-gray-300"
+              }`}
+              style={{
+                width: getResponsiveHeight(45),
+                height: getResponsiveHeight(45),
+              }}
+            >
               <Feather name="hash" size={18} color={clientNumber ? "#3B82F6" : "#9CA3AF"} />
             </View>
             <TextInput
-              style={styles.input}
+              className="flex-1 font-roboto text-gray-900 bg-transparent"
+              style={{
+                height: getResponsiveHeight(45),
+                paddingHorizontal: getResponsiveSize(12),
+                fontSize: getResponsiveSize(14),
+              }}
               placeholder="Ej: 3245"
               value={clientNumber}
               onChangeText={onClientNumberChange}
@@ -75,14 +116,44 @@ export const ClientForm: React.FC<ClientFormProps> = ({
           </View>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Nombre del cliente</Text>
-          <View style={[styles.inputWrapper, clientName ? styles.inputWrapperFilled : null]}>
-            <View style={[styles.iconBox, clientName ? styles.iconBoxFilled : null]}>
+        <View style={{ marginBottom: getResponsiveSize(14) }}>
+          <Text
+            className="font-roboto text-gray-700"
+            style={{
+              fontSize: getResponsiveSize(13),
+              marginBottom: getResponsiveSize(6),
+            }}
+          >
+            Nombre del cliente
+          </Text>
+          <View
+            className={`flex-row items-center border overflow-hidden ${
+              clientName
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 bg-gray-50"
+            }`}
+            style={{ borderRadius: getResponsiveSize(12) }}
+          >
+            <View
+              className={`justify-center items-center border-r ${
+                clientName
+                  ? "bg-blue-100 border-r-blue-500"
+                  : "border-r-gray-300"
+              }`}
+              style={{
+                width: getResponsiveHeight(45),
+                height: getResponsiveHeight(45),
+              }}
+            >
               <Feather name="user" size={18} color={clientName ? "#3B82F6" : "#9CA3AF"} />
             </View>
             <TextInput
-              style={styles.input}
+              className="flex-1 font-roboto text-gray-900 bg-transparent"
+              style={{
+                height: getResponsiveHeight(45),
+                paddingHorizontal: getResponsiveSize(12),
+                fontSize: getResponsiveSize(14),
+              }}
               placeholder="Nombre completo del cliente"
               value={clientName}
               onChangeText={onClientNameChange}
@@ -93,49 +164,148 @@ export const ClientForm: React.FC<ClientFormProps> = ({
           </View>
         </View>
 
-        <View style={styles.sectionHeaderDivider}>
-          <Text style={styles.sectionTitle}>Información adicional</Text>
-          <Text style={styles.sectionTitleSub}>Selecciona una opción para completar la informacion del cliente</Text>
+        <View
+          className="border-t border-gray-200"
+          style={{
+            marginTop: getResponsiveSize(8),
+            marginBottom: getResponsiveSize(16),
+            paddingTop: getResponsiveSize(16),
+          }}
+        >
+          <Text
+            className="font-poppins-bold text-gray-600 uppercase tracking-wider"
+            style={{ fontSize: getResponsiveSize(14) }}
+          >
+            Información adicional
+          </Text>
+          <Text
+            className="font-roboto text-gray-500"
+            style={{ fontSize: getResponsiveSize(12) }}
+          >
+            Selecciona una opción para completar la informacion del cliente
+          </Text>
         </View>
 
-        <View style={styles.segmentedControl}>
+        <View
+          className="flex-row bg-gray-100"
+          style={{
+            elevation: 1,
+            borderRadius: getResponsiveSize(8),
+            padding: getResponsiveSize(4),
+            marginBottom: getResponsiveSize(20),
+          }}
+        >
           <TouchableOpacity
-            style={[styles.segmentButton, contactMethod === "phone" && styles.segmentButtonActive]}
+            className={`flex-1 items-center ${
+              contactMethod === "phone" ? "bg-blue-500" : ""
+            }`}
+            style={{
+              paddingVertical: getResponsiveSize(8),
+              borderRadius: getResponsiveSize(6),
+              ...(contactMethod === "phone" ? { elevation: 1 } : {}),
+            }}
             onPress={() => onContactMethodChange("phone")}
           >
-            <Text style={[styles.segmentButtonText, contactMethod === "phone" && styles.segmentButtonTextActive]}>Teléfono</Text>
+            <Text
+              className={`font-roboto-medium ${
+                contactMethod === "phone" ? "text-white" : "text-gray-500"
+              }`}
+              style={{ fontSize: getResponsiveSize(13) }}
+            >
+              Teléfono
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.segmentButton, contactMethod === "gps" && styles.segmentButtonActive]}
+            className={`flex-1 items-center ${
+              contactMethod === "gps" ? "bg-blue-500" : ""
+            }`}
+            style={{
+              paddingVertical: getResponsiveSize(8),
+              borderRadius: getResponsiveSize(6),
+              ...(contactMethod === "gps" ? { elevation: 1 } : {}),
+            }}
             onPress={() => onContactMethodChange("gps")}
           >
-            <Text style={[styles.segmentButtonText, contactMethod === "gps" && styles.segmentButtonTextActive]}>GPS</Text>
+            <Text
+              className={`font-roboto-medium ${
+                contactMethod === "gps" ? "text-white" : "text-gray-500"
+              }`}
+              style={{ fontSize: getResponsiveSize(13) }}
+            >
+              GPS
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.segmentButton, contactMethod === "both" && styles.segmentButtonActive]}
+            className={`flex-1 items-center ${
+              contactMethod === "both" ? "bg-blue-500" : ""
+            }`}
+            style={{
+              paddingVertical: getResponsiveSize(8),
+              borderRadius: getResponsiveSize(6),
+              ...(contactMethod === "both" ? { elevation: 1 } : {}),
+            }}
             onPress={() => onContactMethodChange("both")}
           >
-            <Text style={[styles.segmentButtonText, contactMethod === "both" && styles.segmentButtonTextActive]}>Ambos</Text>
+            <Text
+              className={`font-roboto-medium ${
+                contactMethod === "both" ? "text-white" : "text-gray-500"
+              }`}
+              style={{ fontSize: getResponsiveSize(13) }}
+            >
+              Ambos
+            </Text>
           </TouchableOpacity>
         </View>
 
         {(contactMethod === "phone" || contactMethod === "both") && (
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Teléfono celular del propietario del negocio</Text>
-            <View style={[
-              styles.inputWrapper,
-              clientPhone ? styles.inputWrapperFilled : null,
-              phoneError ? { borderColor: "#EF4444", backgroundColor: "#FEF2F2" } : null
-            ]}>
-              <View style={[
-                styles.iconBox,
-                clientPhone ? styles.iconBoxFilled : null,
-                phoneError ? { backgroundColor: "#FCA5A5", borderRightColor: "#EF4444" } : null
-              ]}>
-                <Feather name="phone" size={18} color={phoneError ? "#991B1B" : clientPhone ? "#3B82F6" : "#9CA3AF"} />
+          <View style={{ marginBottom: getResponsiveSize(14) }}>
+            <Text
+              className="font-roboto text-gray-700"
+              style={{
+                fontSize: getResponsiveSize(13),
+                marginBottom: getResponsiveSize(6),
+              }}
+            >
+              Teléfono celular del propietario del negocio
+            </Text>
+            <View
+              className={`flex-row items-center border overflow-hidden ${
+                phoneError
+                  ? "border-red-500 bg-red-50"
+                  : clientPhone
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-300 bg-gray-50"
+              }`}
+              style={{ borderRadius: getResponsiveSize(12) }}
+            >
+              <View
+                className={`justify-center items-center border-r ${
+                  phoneError
+                    ? "bg-red-300 border-r-red-500"
+                    : clientPhone
+                    ? "bg-blue-100 border-r-blue-500"
+                    : "border-r-gray-300"
+                }`}
+                style={{
+                  width: getResponsiveHeight(45),
+                  height: getResponsiveHeight(45),
+                }}
+              >
+                <Feather
+                  name="phone"
+                  size={18}
+                  color={phoneError ? "#991B1B" : clientPhone ? "#3B82F6" : "#9CA3AF"}
+                />
               </View>
               <TextInput
-                style={[styles.input, phoneError ? { color: "#991B1B" } : null]}
+                className={`flex-1 font-roboto bg-transparent ${
+                  phoneError ? "text-red-800" : "text-gray-900"
+                }`}
+                style={{
+                  height: getResponsiveHeight(45),
+                  paddingHorizontal: getResponsiveSize(12),
+                  fontSize: getResponsiveSize(14),
+                }}
                 placeholder="Ej: (664)-123-4567"
                 value={clientPhone}
                 onChangeText={onClientPhoneChange}
@@ -146,7 +316,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               />
             </View>
             {phoneError ? (
-              <Text style={{ color: "#EF4444", fontSize: 12, marginTop: 6, marginLeft: 4 }}>
+              <Text className="text-red-500 text-xs mt-1.5 ml-1">
                 {phoneError}
               </Text>
             ) : null}
@@ -154,23 +324,48 @@ export const ClientForm: React.FC<ClientFormProps> = ({
         )}
 
         {(contactMethod === "gps" || contactMethod === "both") && (
-          <View style={styles.locationSection}>
-            <Text style={styles.inputLabel}>Ubicación del negocio</Text>
+          <View>
+            <Text
+              className="font-roboto text-gray-700"
+              style={{
+                fontSize: getResponsiveSize(13),
+                marginBottom: getResponsiveSize(6),
+              }}
+            >
+              Ubicación del negocio
+            </Text>
             {isLocationLoading && !isStatusModalVisible ? (
-              <View style={styles.loadingContainer}>
+              <View
+                className="items-center"
+                style={{ paddingVertical: getResponsiveSize(16) }}
+              >
                 <ActivityIndicator size="large" color="#3B82F6" />
-                <Text style={styles.loadingText}>Obteniendo coordenadas...</Text>
+                <Text
+                  className="font-roboto text-gray-500"
+                  style={{
+                    marginTop: getResponsiveSize(8),
+                    fontSize: getResponsiveSize(12),
+                  }}
+                >
+                  Obteniendo coordenadas...
+                </Text>
               </View>
             ) : (
               <TouchableOpacity
-                style={[
-                  styles.locationButton,
-                  !isBasicInfoFilled && styles.locationButtonDisabled,
-                ]}
+                className={`items-center justify-center ${
+                  !isBasicInfoFilled ? "bg-gray-300" : "bg-blue-500"
+                }`}
+                style={{
+                  height: getResponsiveHeight(45),
+                  borderRadius: getResponsiveSize(12),
+                }}
                 onPress={onGetLocation}
                 disabled={!isBasicInfoFilled}
               >
-                <Text style={styles.locationButtonText}>
+                <Text
+                  className="font-roboto-medium text-white"
+                  style={{ fontSize: getResponsiveSize(14) }}
+                >
                   {location ? (
                     <>
                       <Feather name="refresh-cw" size={14} />
@@ -186,20 +381,24 @@ export const ClientForm: React.FC<ClientFormProps> = ({
         )}
       </View>
 
-      <View style={styles.submitButtonContainer}>
+      <View className="w-auto self-center">
         <TouchableOpacity
-          style={[
-            styles.submitButton,
-            isFormComplete && styles.submitButtonActive,
-          ]}
+          className={`items-center w-full ${
+            isFormComplete ? "bg-emerald-500" : "bg-gray-200"
+          }`}
+          style={{
+            borderRadius: getResponsiveSize(12),
+            paddingVertical: getResponsiveSize(12),
+            paddingHorizontal: getResponsiveSize(16),
+          }}
           onPress={onInitiateSend}
           disabled={!isFormComplete || isSubmitLoading}
         >
           <Text
-            style={[
-              styles.submitButtonText,
-              isFormComplete && styles.submitButtonTextActive,
-            ]}
+            className={`font-roboto-medium ${
+              isFormComplete ? "text-white" : "text-gray-400"
+            }`}
+            style={{ fontSize: getResponsiveSize(14) }}
           >
             {isSubmitLoading
               ? "Enviando..."
@@ -210,151 +409,3 @@ export const ClientForm: React.FC<ClientFormProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-  },
-  formCard: {
-    borderRadius: getResponsiveSize(16),
-    padding: getResponsiveSize(20),
-    width: "100%",
-    marginBottom: getResponsiveSize(10),
-  },
-  sectionHeader: {
-    marginBottom: getResponsiveSize(8),
-  },
-  segmentedControl: {
-    flexDirection: "row",
-    backgroundColor: "#F3F4F6",
-    elevation: 1,
-    borderRadius: getResponsiveSize(8),
-    padding: getResponsiveSize(4),
-    marginBottom: getResponsiveSize(20),
-  },
-  segmentButton: {
-    flex: 1,
-    paddingVertical: getResponsiveSize(8),
-    alignItems: "center",
-    borderRadius: getResponsiveSize(6),
-  },
-  segmentButtonActive: {
-    backgroundColor: "#3B82F6",
-    elevation: 1,
-  },
-  segmentButtonText: {
-    fontFamily: "Roboto_500Medium",
-    fontSize: getResponsiveSize(13),
-    color: "#6B7280",
-  },
-  segmentButtonTextActive: {
-    color: "#ffffffff",
-  },
-  sectionHeaderDivider: {
-    marginTop: getResponsiveSize(8),
-    marginBottom: getResponsiveSize(16),
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    paddingTop: getResponsiveSize(16),
-  },
-  sectionTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: getResponsiveSize(14),
-    color: "#4B5563",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  sectionTitleSub: {
-    fontFamily: "Roboto_400Regular",
-    fontSize: getResponsiveSize(12),
-    color: "#6B7280",
-  },
-  inputContainer: { marginBottom: getResponsiveSize(14) },
-  inputLabel: {
-    fontFamily: "Roboto_400Regular",
-    fontSize: getResponsiveSize(13),
-    color: "#374151",
-    marginBottom: getResponsiveSize(6),
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-    borderColor: "#D1D5DB",
-    borderWidth: 1,
-    borderRadius: getResponsiveSize(12),
-    overflow: "hidden",
-  },
-  inputWrapperFilled: {
-    borderColor: "#3B82F6",
-    backgroundColor: "#EFF6FF",
-  },
-  iconBox: {
-    width: getResponsiveHeight(45),
-    height: getResponsiveHeight(45),
-    justifyContent: "center",
-    alignItems: "center",
-    borderRightWidth: 1,
-    borderRightColor: "#D1D5DB",
-  },
-  iconBoxFilled: {
-    backgroundColor: "#DBEAFE",
-    borderRightColor: "#3B82F6",
-  },
-  input: {
-    flex: 1,
-    height: getResponsiveHeight(45),
-    paddingHorizontal: getResponsiveSize(12),
-    fontSize: getResponsiveSize(14),
-    fontFamily: "Roboto_400Regular",
-    color: "#111827",
-    backgroundColor: "transparent",
-  },
-  locationSection: { marginTop: getResponsiveSize(0) },
-  locationButton: {
-    backgroundColor: "#3B82F6",
-    height: getResponsiveHeight(45),
-    borderRadius: getResponsiveSize(12),
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  locationButtonDisabled: {
-    backgroundColor: "#D1D5DB",
-  },
-  locationButtonText: {
-    fontFamily: "Roboto_500Medium",
-    color: "#FFFFFF",
-    fontSize: getResponsiveSize(14),
-  },
-  submitButtonContainer: {
-    width: "auto",
-    alignSelf: "center",
-  },
-  submitButton: {
-    backgroundColor: "#E5E7EB",
-    borderRadius: getResponsiveSize(12),
-    paddingVertical: getResponsiveSize(12),
-    paddingHorizontal: getResponsiveSize(16),
-    alignItems: "center",
-    width: "100%",
-  },
-  submitButtonActive: {
-    backgroundColor: "#10B981",
-  },
-  submitButtonText: {
-    fontFamily: "Roboto_500Medium",
-    fontSize: getResponsiveSize(14),
-    color: "#9CA3AF",
-  },
-  submitButtonTextActive: { color: "#FFFFFF" },
-  loadingContainer: {
-    alignItems: "center",
-    paddingVertical: getResponsiveSize(16),
-  },
-  loadingText: {
-    fontFamily: "Roboto_400Regular",
-    marginTop: getResponsiveSize(8),
-    fontSize: getResponsiveSize(12),
-    color: "#6B7280",
-  },
-});

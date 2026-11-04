@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -51,22 +50,26 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
-    if (pin === "") {
-      setOtp(Array(6).fill(""));
-    }
-  }, [pin]);
+    if (step !== 'pin' || timer <= 0) return;
 
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (step === 'pin' && timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-    } else if (step === 'phone') {
-      setTimer(40);
-    }
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+
     return () => clearInterval(interval);
   }, [step, timer]);
+
+  const handleVerifyPhonePress = () => {
+    setOtp(Array(6).fill(""));
+    setTimer(40);
+    onVerifyPhone();
+  };
+
+  const handleGoBackPress = () => {
+    setOtp(Array(6).fill(""));
+    setTimer(40);
+    onGoBack();
+  };
 
   const handleResend = () => {
     if (timer === 0) {
@@ -76,18 +79,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   };
 
   const renderProgressBar = () => {
-    const getBarColor = (barStep: 'phone' | 'pin' | 'success') => {
-      if (step === 'success') return "#3B82F6";
-      if (step === 'pin' && (barStep === 'phone' || barStep === 'pin')) return "#3B82F6";
-      if (step === 'phone' && barStep === 'phone') return "#3B82F6";
-      return "#E5E7EB";
+    const getBarClass = (barStep: 'phone' | 'pin' | 'success') => {
+      if (step === 'success') return "bg-blue-500";
+      if (step === 'pin' && (barStep === 'phone' || barStep === 'pin')) return "bg-blue-500";
+      if (step === 'phone' && barStep === 'phone') return "bg-blue-500";
+      return "bg-gray-200";
     };
 
     return (
-      <View style={styles.progressContainer}>
-        <View style={[styles.progressBar, { backgroundColor: getBarColor('phone') }]} />
-        <View style={[styles.progressBar, { backgroundColor: getBarColor('pin') }]} />
-        <View style={[styles.progressBar, { backgroundColor: getBarColor('success') }]} />
+      <View className="flex-row justify-between w-full mb-8 px-2">
+        <View className={`h-1.5 flex-1 rounded-[3px] mx-1 ${getBarClass('phone')}`} />
+        <View className={`h-1.5 flex-1 rounded-[3px] mx-1 ${getBarClass('pin')}`} />
+        <View className={`h-1.5 flex-1 rounded-[3px] mx-1 ${getBarClass('success')}`} />
       </View>
     );
   };
@@ -131,7 +134,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
   const renderPinBoxes = () => {
     return (
-      <View style={styles.pinBoxesContainer}>
+      <View className="flex-row justify-between w-full mb-6 relative">
         {otp.map((digit, index) => {
           const isActive = focusedIndex === index;
 
@@ -139,12 +142,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             <TextInput
               key={index}
               ref={(ref) => { inputRefs.current[index] = ref; }}
-              style={[
-                styles.pinBox,
-                styles.pinBoxText,
-                isActive && styles.pinBoxActive,
-                digit !== "" && !isActive && styles.pinBoxFilled
-              ]}
+              className={`rounded-xl justify-center items-center font-poppins-bold text-gray-800 text-center ${
+                isActive
+                  ? "border-2 border-blue-500 bg-blue-50"
+                  : digit !== ""
+                  ? "border border-gray-600 bg-white"
+                  : "border border-gray-300 bg-gray-50"
+              }`}
+              style={{
+                width: getResponsiveSize(42),
+                height: getResponsiveSize(52),
+                fontSize: getResponsiveSize(20),
+              }}
               value={digit}
               onFocus={() => setFocusedIndex(index)}
               onChangeText={(text) => handleOtpChange(text, index)}
@@ -164,7 +173,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
+    <SafeAreaView className="flex-1 bg-[#F8FAFC]">
       <KeyboardAwareScrollView
         style={{ flex: 1, backgroundColor: "#F8FAFC" }}
         contentContainerStyle={{ flex: 1, justifyContent: "center" }}
@@ -172,19 +181,33 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         showsVerticalScrollIndicator={false}
         enableOnAndroid={true}
       >
-        <View style={styles.authContainer}>
-          <View style={styles.authCard}>
+        <View className="px-5 py-[50px] bg-[#F8FAFC] items-center">
+          <View className="w-full max-w-[400px] p-8 items-center">
 
             {renderProgressBar()}
 
             {step === 'phone' && (
               <>
-                <Text style={styles.authTitle}>Verificación de Empleado</Text>
-                <Text style={styles.authSubtitle}>
+                <Text
+                  className="font-poppins-bold text-gray-800 mb-2 text-center"
+                  style={{ fontSize: getResponsiveSize(18) }}
+                >
+                  Verificación de Empleado
+                </Text>
+                <Text
+                  className="font-roboto text-gray-500 mb-8 text-center leading-5"
+                  style={{ fontSize: getResponsiveSize(14) }}
+                >
                   Ingresa tu número de teléfono para acceder.
                 </Text>
                 <TextInput
-                  style={styles.input}
+                  className="bg-gray-50 border border-gray-300 font-roboto text-gray-900 w-full text-center tracking-[2px]"
+                  style={{
+                    height: getResponsiveHeight(50),
+                    borderRadius: getResponsiveSize(12),
+                    paddingHorizontal: getResponsiveSize(16),
+                    fontSize: getResponsiveSize(14),
+                  }}
                   placeholder="Teléfono (10 dígitos)"
                   value={formatPhoneNumber(userPhoneNumber)}
                   onChangeText={onPhoneNumberChange}
@@ -197,8 +220,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 {isLoading ? (
                   <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
                 ) : (
-                  <TouchableOpacity style={styles.authButton} onPress={onVerifyPhone}>
-                    <Text style={styles.authButtonText}>Continuar</Text>
+                  <TouchableOpacity
+                    className="mt-4 bg-blue-500 py-4 px-6 rounded-2xl w-full items-center flex-row gap-2 justify-center shadow-md shadow-blue-500/20"
+                    style={{ elevation: 4 }}
+                    onPress={handleVerifyPhonePress}
+                  >
+                    <Text
+                      className="font-roboto-medium text-white font-semibold"
+                      style={{ fontSize: getResponsiveHeight(14) }}
+                    >
+                      Continuar
+                    </Text>
                     <Feather name="arrow-right" size={16} color={"#FFFFFF"} />
                   </TouchableOpacity>
                 )}
@@ -207,9 +239,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
             {step === 'pin' && (
               <>
-                <Text style={styles.authTitle}>Código de Seguridad</Text>
-                <Text style={styles.authSubtitle}>
-                  Ingresa el código de 6 dígitos enviado al <Text style={{ fontWeight: "bold", color: "#3B82F6" }}>{formatPhoneNumber(userPhoneNumber)}</Text>.
+                <Text
+                  className="font-poppins-bold text-gray-800 mb-2 text-center"
+                  style={{ fontSize: getResponsiveSize(18) }}
+                >
+                  Código de Seguridad
+                </Text>
+                <Text
+                  className="font-roboto text-gray-500 mb-8 text-center leading-5"
+                  style={{ fontSize: getResponsiveSize(14) }}
+                >
+                  Ingresa el código de 6 dígitos enviado al{" "}
+                  <Text className="font-bold text-blue-500">
+                    {formatPhoneNumber(userPhoneNumber)}
+                  </Text>.
                 </Text>
 
                 {renderPinBoxes()}
@@ -218,22 +261,41 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
                 ) : (
                   <>
-                    <TouchableOpacity style={styles.authButton} onPress={onVerifyPin}>
-                      <Text style={styles.authButtonText}>Verificar PIN</Text>
+                    <TouchableOpacity
+                      className="mt-4 bg-blue-500 py-4 px-6 rounded-2xl w-full items-center flex-row gap-2 justify-center shadow-md shadow-blue-500/20"
+                      style={{ elevation: 4 }}
+                      onPress={onVerifyPin}
+                    >
+                      <Text
+                        className="font-roboto-medium text-white font-semibold"
+                        style={{ fontSize: getResponsiveHeight(14) }}
+                      >
+                        Verificar PIN
+                      </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.resendButton, timer > 0 && styles.resendButtonDisabled]}
+                      className={`mt-4 py-3.5 px-6 rounded-2xl w-full items-center border ${
+                        timer > 0
+                          ? "bg-gray-100 border-gray-200"
+                          : "bg-blue-50 border-blue-200"
+                      }`}
                       onPress={handleResend}
                       disabled={timer > 0 || isLoading}
                     >
-                      <Text style={[styles.resendButtonText, timer > 0 && styles.resendButtonTextDisabled]}>
+                      <Text
+                        className={`font-roboto-medium text-sm ${
+                          timer > 0 ? "text-gray-400" : "text-blue-600"
+                        }`}
+                      >
                         {timer > 0 ? `Reenviar Código en ${timer}s` : "Reenviar Código"}
                       </Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.backButton} onPress={onGoBack}>
-                      <Text style={styles.backButtonText}>Usar otro número</Text>
+                    <TouchableOpacity className="mt-5 p-2" onPress={handleGoBackPress}>
+                      <Text className="font-roboto text-gray-500 text-sm">
+                        Usar otro número
+                      </Text>
                     </TouchableOpacity>
                   </>
                 )}
@@ -241,16 +303,36 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             )}
 
             {step === 'success' && (
-              <View style={styles.successContainer}>
-                <View style={styles.successIconCircle}>
+              <View className="items-center w-full py-4">
+                <View
+                  className="w-20 h-20 rounded-full bg-emerald-500 justify-center items-center mb-6 shadow-lg shadow-emerald-500/30"
+                  style={{ elevation: 5 }}
+                >
                   <MaterialIcons name="check" size={48} color="#FFFFFF" />
                 </View>
-                <Text style={styles.authTitle}>¡Dispositivo Vinculado!</Text>
-                <Text style={styles.authSubtitle}>
+                <Text
+                  className="font-poppins-bold text-gray-800 mb-2 text-center"
+                  style={{ fontSize: getResponsiveSize(18) }}
+                >
+                  ¡Dispositivo Vinculado!
+                </Text>
+                <Text
+                  className="font-roboto text-gray-500 mb-8 text-center leading-5"
+                  style={{ fontSize: getResponsiveSize(14) }}
+                >
                   Tu teléfono ha quedado registrado exitosamente y puedes comenzar a registrar clientes.
                 </Text>
-                <TouchableOpacity style={styles.authButton} onPress={onContinueToForm}>
-                  <Text style={styles.authButtonText}>Ir al Formulario</Text>
+                <TouchableOpacity
+                  className="mt-4 bg-blue-500 py-4 px-6 rounded-2xl w-full items-center flex-row gap-2 justify-center shadow-md shadow-blue-500/20"
+                  style={{ elevation: 4 }}
+                  onPress={onContinueToForm}
+                >
+                  <Text
+                    className="font-roboto-medium text-white font-semibold"
+                    style={{ fontSize: getResponsiveHeight(14) }}
+                  >
+                    Ir al Formulario
+                  </Text>
                   <Feather name="arrow-right" size={16} color={"#FFFFFF"} />
                 </TouchableOpacity>
               </View>
@@ -260,169 +342,5 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         </View>
       </KeyboardAwareScrollView>
     </SafeAreaView>
-
   );
 };
-
-const styles = StyleSheet.create({
-  authContainer: {
-    padding: 20,
-    paddingVertical: 50,
-    backgroundColor: "#F8FAFC",
-    alignItems: "center",
-  },
-  authCard: {
-    width: "100%",
-    maxWidth: 400,
-    padding: 32,
-    alignItems: "center",
-  },
-  progressContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 32,
-    paddingHorizontal: 8,
-  },
-  progressBar: {
-    height: 6,
-    flex: 1,
-    borderRadius: 3,
-    marginHorizontal: 4,
-  },
-  authTitle: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: getResponsiveSize(18),
-    color: "#1F2937",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  authSubtitle: {
-    fontFamily: "Roboto_400Regular",
-    fontSize: getResponsiveSize(14),
-    color: "#6B7280",
-    marginBottom: 32,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  input: {
-    backgroundColor: "#F9FAFB",
-    height: getResponsiveHeight(50),
-    borderColor: "#D1D5DB",
-    borderWidth: 1,
-    borderRadius: getResponsiveSize(12),
-    paddingHorizontal: getResponsiveSize(16),
-    fontSize: getResponsiveSize(14),
-    fontFamily: "Roboto_400Regular",
-    color: "#111827",
-    width: "100%",
-    textAlign: "center",
-    letterSpacing: 2,
-  },
-  pinBoxesContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 24,
-    position: "relative",
-  },
-  pinBox: {
-    width: getResponsiveSize(42),
-    height: getResponsiveSize(52),
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-  },
-  pinBoxActive: {
-    borderColor: "#3B82F6",
-    borderWidth: 2,
-    backgroundColor: "#EFF6FF",
-  },
-  pinBoxFilled: {
-    borderColor: "#4B5563",
-    backgroundColor: "#FFFFFF",
-  },
-  pinBoxText: {
-    fontSize: getResponsiveSize(20),
-    fontFamily: "Poppins_700Bold",
-    color: "#1F2937",
-    textAlign: "center",
-  },
-  successContainer: {
-    alignItems: "center",
-    width: "100%",
-    paddingVertical: 16,
-  },
-  successIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#10B981",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  authButton: {
-    marginTop: 16,
-    backgroundColor: "#3B82F6",
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    width: "100%",
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    justifyContent: "center",
-    shadowColor: "#3B82F6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  authButtonText: {
-    fontFamily: "Roboto_500Medium",
-    color: "#FFFFFF",
-    fontSize: getResponsiveHeight(14),
-    fontWeight: "600",
-  },
-  resendButton: {
-    marginTop: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    width: "100%",
-    alignItems: "center",
-    backgroundColor: "#EFF6FF",
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
-  },
-  resendButtonDisabled: {
-    backgroundColor: "#F3F4F6",
-    borderColor: "#E5E7EB",
-  },
-  resendButtonText: {
-    fontFamily: "Roboto_500Medium",
-    color: "#2563EB",
-    fontSize: 14,
-  },
-  resendButtonTextDisabled: {
-    color: "#9CA3AF",
-  },
-  backButton: {
-    marginTop: 20,
-    padding: 8,
-  },
-  backButtonText: {
-    fontFamily: "Roboto_400Regular",
-    color: "#6B7280",
-    fontSize: 14,
-  }
-});

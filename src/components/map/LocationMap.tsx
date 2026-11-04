@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
 import { getResponsiveHeight, getResponsiveSize } from "../../utils/helpers";
 
@@ -13,51 +13,50 @@ export const LocationMap: React.FC<LocationMapProps> = ({
   mapRegion,
 }) => {
   return (
-    <View style={styles.mapContainer}>
-      <View style={styles.mapCard}>
-        <Text style={styles.mapTitle}>Ubicación en el mapa</Text>
-        <Text style={styles.mapSubtitle}>
+    <View
+      style={{
+        marginTop: getResponsiveSize(8),
+        marginBottom: getResponsiveSize(16),
+      }}
+    >
+      <View style={{ padding: getResponsiveSize(20) }}>
+        <Text
+          className="font-poppins-bold text-gray-600"
+          style={{
+            fontSize: getResponsiveSize(16),
+            marginBottom: getResponsiveSize(2),
+          }}
+        >
+          Ubicación en el mapa
+        </Text>
+        <Text
+          className="font-roboto text-gray-500"
+          style={{
+            fontSize: getResponsiveSize(14),
+            marginBottom: getResponsiveSize(12),
+          }}
+        >
           Esta es la ubicación exacta que fue obtenida.
         </Text>
-        <MapView
-          style={styles.map}
-          region={mapRegion}
+        <View
+          className="w-full overflow-hidden"
+          style={{
+            height: getResponsiveHeight(250),
+            borderRadius: getResponsiveSize(12),
+          }}
         >
-          <Marker
-            coordinate={location}
-            title="Ubicación del Cliente"
-            description="Ubicación confirmada"
-          />
-        </MapView>
+          <MapView
+            style={{ width: "100%", height: "100%" }}
+            region={mapRegion}
+          >
+            <Marker
+              coordinate={location}
+              title="Ubicación del Cliente"
+              description="Ubicación confirmada"
+            />
+          </MapView>
+        </View>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  mapContainer: {
-    marginTop: getResponsiveSize(8),
-    marginBottom: getResponsiveSize(16),
-  },
-  mapCard: {
-    padding: getResponsiveSize(20),
-  },
-  mapTitle: {
-    fontSize: getResponsiveSize(16),
-    fontFamily: "Poppins_700Bold",
-    color: "#4B5563",
-    marginBottom: getResponsiveSize(2),
-  },
-  mapSubtitle: {
-    fontFamily: "Roboto_400Regular",
-    fontSize: getResponsiveSize(14),
-    color: "#6B7280",
-    marginBottom: getResponsiveSize(12),
-  },
-  map: {
-    width: "100%",
-    height: getResponsiveHeight(250),
-    borderRadius: getResponsiveSize(12),
-    overflow: "hidden",
-  },
-});
