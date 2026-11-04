@@ -2,11 +2,11 @@ import "dotenv/config";
 
 export default {
   expo: {
-    name: "GPS Clientes",
+    name: "Registro GPS",
     slug: "clientes-nuevos",
-    version: "1.0.1",
+    version: "1.0.2",
     orientation: "portrait",
-    icon: "./assets/Tools.png",
+    icon: "./assets/images/icon.png",
     scheme: "clientesnuevos",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
@@ -15,7 +15,7 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/Tools.png",
+        foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
@@ -38,7 +38,7 @@ export default {
       [
         "expo-splash-screen",
         {
-          image: "./assets/Tools.png",
+          image: "./assets/images/splash-icon.png",
           imageWidth: 200,
           resizeMode: "contain",
           backgroundColor: "#ffffff",
