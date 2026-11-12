@@ -2,13 +2,15 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import {
-  ActivityIndicator,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Region } from "react-native-maps";
 import { getResponsiveHeight, getResponsiveSize } from "../../utils/helpers";
+import { LocationMap } from "../map/LocationMap";
+import { MediaCardSkeleton } from "../ui/Skeleton";
 
 interface ClientFormProps {
   clientNumber: string;
@@ -19,15 +21,15 @@ interface ClientFormProps {
   onClientPhoneChange: (text: string) => void;
   phoneError?: string;
   isLocationLoading: boolean;
-  isSubmitLoading: boolean;
   isStatusModalVisible: boolean;
-  location: any;
+  location: { latitude: number; longitude: number } | null;
+  mapRegion?: Region;
+  onLocationChange?: (coords: { latitude: number; longitude: number }) => void;
   onGetLocation: () => void;
-  onInitiateSend: () => void;
-  isFormComplete: boolean;
   isBasicInfoFilled: boolean;
   contactMethod: "phone" | "gps" | "both";
   onContactMethodChange: (method: "phone" | "gps" | "both") => void;
+  onInputFocus?: (field: "number" | "name" | "phone") => void;
 }
 
 export const ClientForm: React.FC<ClientFormProps> = ({
@@ -39,30 +41,30 @@ export const ClientForm: React.FC<ClientFormProps> = ({
   onClientPhoneChange,
   phoneError,
   isLocationLoading,
-  isSubmitLoading,
   isStatusModalVisible,
   location,
+  mapRegion,
+  onLocationChange,
   onGetLocation,
-  onInitiateSend,
-  isFormComplete,
   isBasicInfoFilled,
   contactMethod,
   onContactMethodChange,
+  onInputFocus,
 }) => {
   return (
     <View className="w-full">
       <View
-        className="w-full"
+        className="w-full bg-white border border-gray-200"
         style={{
           borderRadius: getResponsiveSize(16),
-          padding: getResponsiveSize(20),
-          marginBottom: getResponsiveSize(10),
+          padding: getResponsiveSize(18),
+          marginBottom: getResponsiveSize(16),
         }}
       >
         <View style={{ marginBottom: getResponsiveSize(8) }}>
           <Text
-            className="font-poppins-bold text-gray-600 uppercase tracking-wider"
-            style={{ fontSize: getResponsiveSize(14) }}
+            className="font-poppins-bold text-gray-700 uppercase tracking-wider"
+            style={{ fontSize: getResponsiveSize(13) }}
           >
             Información Obligatoria
           </Text>
@@ -112,6 +114,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               keyboardType="numeric"
               placeholderTextColor="#9CA3AF"
               contextMenuHidden={true}
+              onFocus={() => onInputFocus?.("number")}
             />
           </View>
         </View>
@@ -160,6 +163,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
               keyboardType="default"
               placeholderTextColor="#9CA3AF"
               contextMenuHidden={true}
+              onFocus={() => onInputFocus?.("name")}
             />
           </View>
         </View>
@@ -173,8 +177,8 @@ export const ClientForm: React.FC<ClientFormProps> = ({
           }}
         >
           <Text
-            className="font-poppins-bold text-gray-600 uppercase tracking-wider"
-            style={{ fontSize: getResponsiveSize(14) }}
+            className="font-poppins-bold text-gray-700 uppercase tracking-wider"
+            style={{ fontSize: getResponsiveSize(13) }}
           >
             Información adicional
           </Text>
@@ -182,7 +186,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
             className="font-roboto text-gray-500"
             style={{ fontSize: getResponsiveSize(12) }}
           >
-            Selecciona una opción para completar la informacion del cliente
+            Selecciona una opción para completar la información del cliente
           </Text>
         </View>
 
@@ -313,6 +317,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({
                 maxLength={14}
                 placeholderTextColor={phoneError ? "#F87171" : "#9CA3AF"}
                 contextMenuHidden={true}
+                onFocus={() => onInputFocus?.("phone")}
               />
             </View>
             {phoneError ? (
@@ -334,77 +339,36 @@ export const ClientForm: React.FC<ClientFormProps> = ({
             >
               Ubicación del negocio
             </Text>
+
             {isLocationLoading && !isStatusModalVisible ? (
-              <View
-                className="items-center"
-                style={{ paddingVertical: getResponsiveSize(16) }}
-              >
-                <ActivityIndicator size="large" color="#3B82F6" />
-                <Text
-                  className="font-roboto text-gray-500"
-                  style={{
-                    marginTop: getResponsiveSize(8),
-                    fontSize: getResponsiveSize(12),
-                  }}
-                >
-                  Obteniendo coordenadas...
-                </Text>
-              </View>
+              <MediaCardSkeleton />
+            ) : location ? (
+              <LocationMap
+                location={location}
+                mapRegion={mapRegion}
+                onLocationChange={onLocationChange}
+                onRefreshLocation={onGetLocation}
+                markerTitle="Ubicación del Cliente"
+              />
             ) : (
               <TouchableOpacity
-                className={`items-center justify-center ${
-                  !isBasicInfoFilled ? "bg-gray-300" : "bg-blue-500"
+                className={`flex-row items-center justify-center py-3.5 rounded-xl ${
+                  !isBasicInfoFilled ? "bg-gray-300" : "bg-blue-500 active:opacity-90"
                 }`}
-                style={{
-                  height: getResponsiveHeight(45),
-                  borderRadius: getResponsiveSize(12),
-                }}
                 onPress={onGetLocation}
                 disabled={!isBasicInfoFilled}
               >
+                <Feather name="navigation" size={16} color="#FFFFFF" />
                 <Text
-                  className="font-roboto-medium text-white"
+                  className="font-roboto-medium text-white ml-2"
                   style={{ fontSize: getResponsiveSize(14) }}
                 >
-                  {location ? (
-                    <>
-                      <Feather name="refresh-cw" size={14} />
-                      {" Volver a obtener ubicación"}
-                    </>
-                  ) : (
-                    "Obtener ubicación"
-                  )}
+                  Obtener ubicación
                 </Text>
               </TouchableOpacity>
             )}
           </View>
         )}
-      </View>
-
-      <View className="w-auto self-center">
-        <TouchableOpacity
-          className={`items-center w-full ${
-            isFormComplete ? "bg-emerald-500" : "bg-gray-200"
-          }`}
-          style={{
-            borderRadius: getResponsiveSize(12),
-            paddingVertical: getResponsiveSize(12),
-            paddingHorizontal: getResponsiveSize(16),
-          }}
-          onPress={onInitiateSend}
-          disabled={!isFormComplete || isSubmitLoading}
-        >
-          <Text
-            className={`font-roboto-medium ${
-              isFormComplete ? "text-white" : "text-gray-400"
-            }`}
-            style={{ fontSize: getResponsiveSize(14) }}
-          >
-            {isSubmitLoading
-              ? "Enviando..."
-              : "Enviar Registro"}
-          </Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
