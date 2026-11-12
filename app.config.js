@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "Registro GPS",
     slug: "clientes-nuevos",
-    version: "1.0.2",
+    version: "1.0.3",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "clientesnuevos",
@@ -20,7 +20,7 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: "com.erick.sandoval10.clientesnuevos",
-      versionCode: 2,
+      versionCode: 3,
       permissions: ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "REQUEST_INSTALL_PACKAGES"],
       config: {
         googleMaps: {
