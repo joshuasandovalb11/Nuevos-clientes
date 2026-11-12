@@ -1,3 +1,5 @@
+import * as Application from "expo-application";
+import Constants from "expo-constants";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -7,6 +9,11 @@ import { getResponsiveSize } from "../src/utils/helpers";
 import { getUserInfo } from "../src/utils/storage";
 
 export default function MenuScreen() {
+  const appVersion =
+    Constants.expoConfig?.version ??
+    Application.nativeApplicationVersion ??
+    "1.0.3";
+
   const params = useLocalSearchParams();
   const initialName = typeof params.salespersonName === "string" ? params.salespersonName : "";
   const initialPhone = typeof params.salespersonPhone === "string" ? params.salespersonPhone : "";
@@ -194,6 +201,20 @@ export default function MenuScreen() {
           </View>
         </View>
       </ScrollView>
+      <View
+        className="items-center justify-center"
+        style={{ paddingBottom: getResponsiveSize(10) }}
+      >
+        <Text
+          className="font-roboto-medium text-slate-400 text-center"
+          style={{
+            fontSize: getResponsiveSize(11),
+            letterSpacing: 0.5,
+          }}
+        >
+          v{appVersion}
+        </Text>
+      </View>
     </SafeAreaView>
   );
 }
