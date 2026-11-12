@@ -2,9 +2,10 @@ import * as Cellular from 'expo-cellular';
 import * as Device from "expo-device";
 import { Stack, router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Keyboard, View } from "react-native";
+import { Keyboard } from "react-native";
 import { AuthScreen } from "../src/components/auth/AuthScreen";
 import { StatusModal } from "../src/components/modals/StatusModal";
+import { AppSessionSkeleton } from "../src/components/ui/Skeleton";
 import { requestSms, resendSms, resetSms, verifyPin } from "../src/services/api";
 import { getDeviceUuid, getSessionToken, getUserInfo, setSessionToken, setUserInfo } from "../src/utils/storage";
 
@@ -36,7 +37,7 @@ export default function LoginScreen() {
         if (token) {
           const userInfo = await getUserInfo();
           router.replace({
-            pathname: "/form",
+            pathname: "/menu",
             params: {
               salespersonName: userInfo?.name || "Vendedor",
               salespersonPhone: userInfo?.phone || ""
@@ -138,7 +139,7 @@ export default function LoginScreen() {
 
   const handleContinueToForm = () => {
     router.replace({
-      pathname: "/form",
+      pathname: "/menu",
       params: {
         salespersonName: salespersonName,
         salespersonPhone: userPhoneNumber
@@ -147,11 +148,7 @@ export default function LoginScreen() {
   };
 
   if (isAppLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-[#F8FAFC]">
-        <ActivityIndicator size="large" color="#3B82F6" />
-      </View>
-    );
+    return <AppSessionSkeleton />;
   }
 
   return (
