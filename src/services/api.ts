@@ -189,7 +189,7 @@ export const registerClient = async (payload: RegisterClientPayload) => {
       ...(token ? { "Authorization": `Bearer ${token}` } : {})
     },
     body: JSON.stringify(payload),
-  }, 30000);
+  }, 45000);
 
   const result = await response.json();
   if (!response.ok) {
