@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react';
 import { AppState, LogBox, StatusBar } from 'react-native';
 import "../global.css";
 import { OTAUpdater } from '../src/components/OTAUpdater';
+import { SplashProvider } from '../src/components/ui/AnimatedSplash';
 import { clearSessionToken, getSessionToken } from '../src/utils/storage';
 
 LogBox.ignoreLogs([
@@ -69,18 +70,12 @@ export default function RootLayout() {
     };
   }, [router]);
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) {
     return null;
   }
 
   return (
-    <>
+    <SplashProvider>
       <OTAUpdater />
       {/* Configuración de la barra de estado */}
       <StatusBar barStyle="dark-content" />
@@ -124,6 +119,6 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-    </>
+    </SplashProvider>
   );
 }

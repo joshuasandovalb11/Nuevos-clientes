@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Keyboard } from "react-native";
 import { AuthScreen } from "../src/components/auth/AuthScreen";
 import { StatusModal } from "../src/components/modals/StatusModal";
+import { useSplash } from "../src/components/ui/AnimatedSplash";
 import { AppSessionSkeleton } from "../src/components/ui/Skeleton";
 import { requestSms, resendSms, resetSms, verifyPin } from "../src/services/api";
 import { getDeviceUuid, getSessionToken, getUserInfo, setSessionToken, setUserInfo } from "../src/utils/storage";
@@ -12,6 +13,7 @@ import { getDeviceUuid, getSessionToken, getUserInfo, setSessionToken, setUserIn
 const APP_ID = 1;
 
 export default function LoginScreen() {
+  const { markAppReady } = useSplash();
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [step, setStep] = useState<'phone' | 'pin' | 'success'>('phone');
   const [userPhoneNumber, setUserPhoneNumber] = useState("");
@@ -43,17 +45,26 @@ export default function LoginScreen() {
               salespersonPhone: userInfo?.phone || ""
             }
           });
+          setTimeout(() => {
+            markAppReady();
+          }, 80);
         } else {
           await getDeviceUuid();
           setIsAppLoading(false);
+          requestAnimationFrame(() => {
+            markAppReady();
+          });
         }
       } catch {
         setIsAppLoading(false);
+        requestAnimationFrame(() => {
+          markAppReady();
+        });
       }
     };
 
     checkExistingSession();
-  }, []);
+  }, [markAppReady]);
 
   const handleRequestSms = async () => {
     if (!userPhoneNumber || userPhoneNumber.length !== 10) {
