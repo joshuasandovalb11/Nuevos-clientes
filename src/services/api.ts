@@ -168,9 +168,12 @@ export const resetSms = async (telefono: string) => {
 };
 
 export interface RegisterClientPayload {
-  client_number: string;
-  client_name: string;
+  type?: "CLIENT" | "LOCATION";
+  client_number?: string;
+  client_name?: string;
   client_phone?: string;
+  place_category?: string;
+  photo_base64?: string;
   latitude?: number;
   longitude?: number;
   salesperson_name: string;
