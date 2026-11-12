@@ -47,7 +47,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [timer, setTimer] = useState(40);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
-  const inputRefs = useRef<(TextInput | null)[]>([]);
+  const inputRefs = useRef<(React.ComponentRef<typeof TextInput> | null)[]>([]);
+  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
+
+  useEffect(() => {
+    scrollViewRef.current?.scrollToPosition(0, 0, true);
+  }, [step]);
 
   useEffect(() => {
     if (step !== 'pin' || timer <= 0) return;
@@ -175,11 +180,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC]">
       <KeyboardAwareScrollView
+        ref={scrollViewRef}
         style={{ flex: 1, backgroundColor: "#F8FAFC" }}
-        contentContainerStyle={{ flex: 1, justifyContent: "center" }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        enableOnAndroid={true}
+        enableOnAndroid={false}
       >
         <View className="px-5 py-[50px] bg-[#F8FAFC] items-center">
           <View className="w-full max-w-[400px] p-8 items-center">
