@@ -60,6 +60,9 @@ export default {
       ],
       "expo-mail-composer",
       "expo-font",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-web-browser",
     ],
     experiments: {
       typedRoutes: true,
