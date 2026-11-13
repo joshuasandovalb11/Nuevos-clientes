@@ -525,7 +525,7 @@ export default function LocationScreen() {
                   className="font-poppins-bold text-gray-700 uppercase tracking-wider"
                   style={{ fontSize: getResponsiveSize(13) }}
                 >
-                  2. Foto de la Fachada
+                  2. Foto del establecimiento
                 </Text>
                 <Text
                   className="font-roboto text-gray-500 mt-0.5"
