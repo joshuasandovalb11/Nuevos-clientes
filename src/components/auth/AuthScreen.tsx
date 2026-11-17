@@ -9,7 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import {
+  KeyboardAwareScrollView,
+  KeyboardAwareScrollViewRef,
+} from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   formatPhoneNumber,
@@ -48,10 +51,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const inputRefs = useRef<(React.ComponentRef<typeof TextInput> | null)[]>([]);
-  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
+  const scrollViewRef = useRef<KeyboardAwareScrollViewRef>(null);
 
   useEffect(() => {
-    scrollViewRef.current?.scrollToPosition(0, 0, true);
+    scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
   }, [step]);
 
   useEffect(() => {
@@ -185,7 +188,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        enableOnAndroid={false}
+        bottomOffset={getResponsiveSize(90)}
+        extraKeyboardSpace={getResponsiveSize(20)}
       >
         <View className="px-5 py-[50px] bg-[#F8FAFC] items-center">
           <View className="w-full max-w-[400px] p-8 items-center">

@@ -10,7 +10,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import {
+  KeyboardAwareScrollView,
+  KeyboardAwareScrollViewRef,
+} from "react-native-keyboard-controller";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { LocationMap } from "../src/components/map/LocationMap";
@@ -26,7 +29,7 @@ import { clearSessionToken, getUserInfo } from "../src/utils/storage";
 
 export default function LocationScreen() {
   const insets = useSafeAreaInsets();
-  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
+  const scrollViewRef = useRef<KeyboardAwareScrollViewRef>(null);
   const viewportHeightRef = useRef<number>(0);
   const contentHeightRef = useRef<number>(0);
   const card1YRef = useRef<number>(0);
@@ -112,12 +115,12 @@ export default function LocationScreen() {
     if (!scrollViewRef.current) return;
 
     if (mode === "TOP") {
-      scrollViewRef.current.scrollToPosition(0, 0, true);
+      scrollViewRef.current.scrollTo({ x: 0, y: 0, animated: true });
       return;
     }
 
     if (mode === "BOTTOM") {
-      scrollViewRef.current.scrollToEnd(true);
+      scrollViewRef.current.scrollToEnd({ animated: true });
       return;
     }
 
@@ -128,14 +131,14 @@ export default function LocationScreen() {
       const hasPhoto = hasPhotoOverride ?? Boolean(photoUri);
 
       if (hasPhoto) {
-        scrollViewRef.current.scrollToPosition(0, Math.max(0, card1Y - 12), true);
+        scrollViewRef.current.scrollTo({ x: 0, y: Math.max(0, card1Y - 12), animated: true });
       } else if (viewportH > 0 && contentH > viewportH) {
         const desiredBottomY = Math.max(0, contentH - viewportH);
         const maxCard1TopY = card1Y > 0 ? Math.max(0, card1Y - 12) : desiredBottomY;
         const targetY = Math.min(desiredBottomY, maxCard1TopY);
-        scrollViewRef.current.scrollToPosition(0, targetY, true);
+        scrollViewRef.current.scrollTo({ x: 0, y: targetY, animated: true });
       } else {
-        scrollViewRef.current.scrollToEnd(true);
+        scrollViewRef.current.scrollToEnd({ animated: true });
       }
     }
   };
@@ -363,8 +366,6 @@ export default function LocationScreen() {
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        enableOnAndroid={true}
-        enableResetScrollToCoords={false}
         onLayout={(e) => {
           viewportHeightRef.current = e.nativeEvent.layout.height;
         }}

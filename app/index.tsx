@@ -1,18 +1,21 @@
 import * as Cellular from 'expo-cellular';
 import * as Device from "expo-device";
-import { Stack, router } from "expo-router";
-import { useEffect, useState } from "react";
+import { Stack, router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { Keyboard } from "react-native";
 import { AuthScreen } from "../src/components/auth/AuthScreen";
 import { StatusModal } from "../src/components/modals/StatusModal";
 import { useSplash } from "../src/components/ui/AnimatedSplash";
 import { AppSessionSkeleton } from "../src/components/ui/Skeleton";
-import { requestSms, resendSms, resetSms, verifyPin } from "../src/services/api";
-import { getDeviceUuid, getSessionToken, getUserInfo, setSessionToken, setUserInfo } from "../src/utils/storage";
+import { requestSms, resendSms, resetSms, validateSession, verifyPin } from "../src/services/api";
+import { clearSessionToken, getDeviceUuid, getSessionToken, getUserInfo, setSessionToken, setUserInfo } from "../src/utils/storage";
 
 const APP_ID = 1;
+const SESSION_REVOKED_MESSAGE =
+  "Tu acceso ha sido eliminado o el dispositivo ya no está autorizado. Por favor, vuelve a vincular tu celular.";
 
 export default function LoginScreen() {
+  const params = useLocalSearchParams<{ sessionRevoked?: string }>();
   const { markAppReady } = useSplash();
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [step, setStep] = useState<'phone' | 'pin' | 'success'>('phone');
@@ -20,23 +23,56 @@ export default function LoginScreen() {
   const [pinCode, setPinCode] = useState("");
   const [authIsLoading, setAuthIsLoading] = useState(false);
   const [salespersonName, setSalespersonName] = useState("");
-  const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
-  const [statusModalContent, setStatusModalContent] = useState({
-    title: "",
-    message: "",
-    isError: false,
-  });
+  const [isStatusModalVisible, setIsStatusModalVisible] = useState(
+    params.sessionRevoked === "1"
+  );
+  const [statusModalContent, setStatusModalContent] = useState(
+    params.sessionRevoked === "1"
+      ? {
+          title: "Sesión Revocada",
+          message: SESSION_REVOKED_MESSAGE,
+          isError: true,
+        }
+      : {
+          title: "",
+          message: "",
+          isError: false,
+        }
+  );
 
-  const showErrorModal = (title: string, message: string) => {
+  const showErrorModal = useCallback((title: string, message: string) => {
     setStatusModalContent({ title, message, isError: true });
     setIsStatusModalVisible(true);
-  };
+  }, []);
 
   useEffect(() => {
     const checkExistingSession = async () => {
       try {
+        if (params.sessionRevoked === "1") {
+          await getDeviceUuid();
+          setIsAppLoading(false);
+          requestAnimationFrame(() => {
+            markAppReady();
+          });
+          return;
+        }
+
         const token = await getSessionToken();
         if (token) {
+          const sessionStatus = await validateSession();
+          if (sessionStatus === "REVOKED" || sessionStatus === "MISSING") {
+            await clearSessionToken();
+            await getDeviceUuid();
+            setIsAppLoading(false);
+            requestAnimationFrame(() => {
+              markAppReady();
+            });
+            if (sessionStatus === "REVOKED") {
+              showErrorModal("Sesión Revocada", SESSION_REVOKED_MESSAGE);
+            }
+            return;
+          }
+
           const userInfo = await getUserInfo();
           router.replace({
             pathname: "/menu",
@@ -64,7 +100,7 @@ export default function LoginScreen() {
     };
 
     checkExistingSession();
-  }, [markAppReady]);
+  }, [markAppReady, params.sessionRevoked, showErrorModal]);
 
   const handleRequestSms = async () => {
     if (!userPhoneNumber || userPhoneNumber.length !== 10) {
@@ -112,8 +148,12 @@ export default function LoginScreen() {
       const deviceModel = Device.modelName || "Desconocido";
       const result = await verifyPin(userPhoneNumber, APP_ID, pinCode, deviceUuid, deviceModel);
 
+      if (!result.token_sesion) {
+        throw new Error("El servidor no devolvió un token de sesión válido.");
+      }
+
       // Guardar sesión y datos de usuario
-      await setSessionToken(result.token_sesion || "dummy_token_if_api_not_ready");
+      await setSessionToken(result.token_sesion);
 
       const sName = result.user?.nombre || "Vendedor";
       await setUserInfo(sName, userPhoneNumber);

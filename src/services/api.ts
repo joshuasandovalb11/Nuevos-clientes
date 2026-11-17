@@ -167,6 +167,46 @@ export const resetSms = async (telefono: string) => {
   return result;
 };
 
+export type SessionValidationStatus = "VALID" | "REVOKED" | "MISSING" | "UNREACHABLE";
+
+/**
+ * Valida contra el servidor si el token de sesión actual sigue vigente en la BD.
+ * Devuelve "REVOKED" únicamente ante HTTP 401; ante errores de red o caídas temporales
+ * devuelve "UNREACHABLE" para no bloquear al vendedor cuando esté sin señal en campo.
+ */
+export const validateSession = async (): Promise<SessionValidationStatus> => {
+  const token = await getSessionToken();
+  if (!token || token === "null" || token === "undefined") {
+    return "MISSING";
+  }
+
+  try {
+    const response = await fetchWithTimeout(
+      `/validate-token`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      3500
+    );
+
+    if (response.ok) {
+      return "VALID";
+    }
+
+    if (response.status === 401) {
+      return "REVOKED";
+    }
+
+    return "UNREACHABLE";
+  } catch {
+    return "UNREACHABLE";
+  }
+};
+
 export interface RegisterClientPayload {
   type?: "CLIENT" | "LOCATION";
   client_number?: string;
@@ -182,11 +222,15 @@ export interface RegisterClientPayload {
 
 export const registerClient = async (payload: RegisterClientPayload) => {
   const token = await getSessionToken();
-  const response = await fetchWithTimeout(`/send-mail`, {
+  if (!token || token === "null" || token === "undefined") {
+    throw new Error("AUTH_ERROR");
+  }
+
+  const response = await fetchWithTimeout(`/v2/send-mail`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      "Authorization": `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   }, 45000);

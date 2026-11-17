@@ -2,8 +2,12 @@ import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
-import { ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Image, Keyboard, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Image, Keyboard, Platform, Text, TouchableOpacity, View } from "react-native";
+import {
+  KeyboardAwareScrollView,
+  KeyboardAwareScrollViewRef,
+} from "react-native-keyboard-controller";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ClientForm } from "../src/components/form/ClientForm";
@@ -18,10 +22,9 @@ import { clearSessionToken } from "../src/utils/storage";
 
 export default function FormScreen() {
   const insets = useSafeAreaInsets();
-  const scrollViewRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const scrollViewRef = useRef<KeyboardAwareScrollViewRef>(null);
   const pendingScrollRef = useRef<"NONE" | "BOTTOM" | "TOP">("NONE");
   const focusedFieldRef = useRef<"number" | "name" | "phone" | null>(null);
-  const currentScrollYRef = useRef(0);
   const [lockedBottomY, setLockedBottomY] = useState<number | null>(null);
   const [bottomBarHeight, setBottomBarHeight] = useState(0);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -161,42 +164,11 @@ export default function FormScreen() {
     return "";
   }, [clientPhone]);
 
-  const scrollToFocusedField = useCallback(
-    (field: "number" | "name" | "phone") => {
-      if (!scrollViewRef.current) return;
-      if (field === "number") {
-        if (currentScrollYRef.current > getResponsiveSize(60)) {
-          scrollViewRef.current.scrollTo({ y: 0, animated: true });
-        }
-      } else if (field === "name") {
-        scrollViewRef.current.scrollTo({
-          y: getResponsiveSize(75),
-          animated: true,
-        });
-      } else if (field === "phone") {
-        if (contactMethod === "phone") {
-          scrollViewRef.current.scrollToEnd({ animated: true });
-        } else {
-          scrollViewRef.current.scrollTo({
-            y: getResponsiveSize(310),
-            animated: true,
-          });
-        }
-      }
-    },
-    [contactMethod]
-  );
-
   const handleInputFocus = useCallback(
     (field: "number" | "name" | "phone") => {
       focusedFieldRef.current = field;
-      if (isKeyboardVisible) {
-        setTimeout(() => {
-          scrollToFocusedField(field);
-        }, 50);
-      }
     },
-    [isKeyboardVisible, scrollToFocusedField]
+    []
   );
 
   useEffect(() => {
@@ -205,15 +177,6 @@ export default function FormScreen() {
 
     const showSub = Keyboard.addListener(showEvent, () => {
       setIsKeyboardVisible(true);
-      const field = focusedFieldRef.current;
-      if (field) {
-        setTimeout(() => {
-          scrollToFocusedField(field);
-        }, 40);
-        setTimeout(() => {
-          scrollToFocusedField(field);
-        }, 160);
-      }
     });
 
     const hideSub = Keyboard.addListener(hideEvent, () => {
@@ -225,13 +188,15 @@ export default function FormScreen() {
       showSub.remove();
       hideSub.remove();
     };
-  }, [scrollToFocusedField]);
+  }, []);
 
   useEffect(() => {
-    if (phoneError) {
-      scrollToFocusedField("phone");
+    if (phoneError && isKeyboardVisible) {
+      requestAnimationFrame(() => {
+        scrollViewRef.current?.assureFocusedInputVisible();
+      });
     }
-  }, [phoneError, scrollToFocusedField]);
+  }, [phoneError, isKeyboardVisible]);
 
   const handleInitiateSend = () => {
     Keyboard.dismiss();
@@ -387,7 +352,7 @@ export default function FormScreen() {
         </View>
       </View>
 
-      <ScrollView
+      <KeyboardAwareScrollView
         ref={scrollViewRef}
         style={{
           flex: 1,
@@ -397,15 +362,12 @@ export default function FormScreen() {
         contentContainerStyle={{
           paddingHorizontal: getResponsiveSize(20),
           paddingTop: getResponsiveSize(5),
-          paddingBottom: getResponsiveSize(4),
+          paddingBottom: getResponsiveSize(12),
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
-        onScroll={(e) => {
-          currentScrollYRef.current = e.nativeEvent.contentOffset.y;
-        }}
-        scrollEventThrottle={16}
+        bottomOffset={getResponsiveSize(52)}
+        extraKeyboardSpace={getResponsiveSize(16)}
         onContentSizeChange={() => {
           if (pendingScrollRef.current !== "NONE") {
             const mode = pendingScrollRef.current;
@@ -415,11 +377,10 @@ export default function FormScreen() {
             });
           } else if (
             isKeyboardVisible &&
-            focusedFieldRef.current === "phone" &&
-            contactMethod === "phone"
+            focusedFieldRef.current === "phone"
           ) {
             requestAnimationFrame(() => {
-              scrollViewRef.current?.scrollToEnd({ animated: true });
+              scrollViewRef.current?.assureFocusedInputVisible();
             });
           }
         }}
@@ -504,7 +465,7 @@ export default function FormScreen() {
             onInputFocus={handleInputFocus}
           />
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* Barra fija inferior de acción */}
       <View
