@@ -5,7 +5,7 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
-import { AppState, LogBox, StatusBar } from 'react-native';
+import { AppState, LogBox, StatusBar, TurboModuleRegistry } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import "../global.css";
 import { OTAUpdater } from '../src/components/OTAUpdater';
@@ -18,6 +18,12 @@ LogBox.ignoreLogs([
 ]);
 
 SplashScreen.preventAutoHideAsync();
+
+const deviceInfoModule = TurboModuleRegistry.get<{
+  getConstants?: () => { isEdgeToEdge?: boolean };
+}>('DeviceInfo');
+const isNativeEdgeToEdge =
+  deviceInfoModule?.getConstants?.()?.isEdgeToEdge === true;
 
 export default function RootLayout() {
   const router = useRouter();
@@ -102,7 +108,10 @@ export default function RootLayout() {
   }
 
   return (
-    <KeyboardProvider>
+    <KeyboardProvider
+      statusBarTranslucent={isNativeEdgeToEdge ? undefined : true}
+      navigationBarTranslucent={isNativeEdgeToEdge ? undefined : true}
+    >
       <SplashProvider>
         <OTAUpdater />
         {/* Configuración de la barra de estado */}
