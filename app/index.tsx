@@ -147,13 +147,14 @@ export default function LoginScreen() {
       const deviceUuid = await getDeviceUuid();
       const deviceModel = Device.modelName || "Desconocido";
       const result = await verifyPin(userPhoneNumber, APP_ID, pinCode, deviceUuid, deviceModel);
+      const sessionToken = result?.token || result?.token_sesion;
 
-      if (!result.token_sesion) {
+      if (!sessionToken) {
         throw new Error("El servidor no devolvió un token de sesión válido.");
       }
 
       // Guardar sesión y datos de usuario
-      await setSessionToken(result.token_sesion);
+      await setSessionToken(sessionToken);
 
       const sName = result.user?.nombre || "Vendedor";
       await setUserInfo(sName, userPhoneNumber);
